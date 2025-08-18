@@ -1,0 +1,10 @@
+version: 2
+stack_defaults:
+  project_root: infra/dev
+  environment:
+    TG_CLI_ARGS_init: "--terragrunt-non-interactive"
+    TG_CLI_ARGS_plan: "--terragrunt-non-interactive"
+    TG_CLI_ARGS_apply: "--terragrunt-non-interactive"
+  before_init:
+    - terragrunt --version
+
