@@ -1,0 +1,56 @@
+name: Spacelift Deploy (OIDC, zero GH secrets)
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_type:
+        description: "deploy (apply) or propose (plan-only)"
+        type: choice
+        default: deploy
+        options: [deploy, propose]
+
+permissions:
+  id-token: write   # <-- needed for OIDC
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: us-west-2                # set your region
+      STACK_ID: your-spacelift-stack-slug  # set as a repo variable if you prefer
+    steps:
+      - name: Use OIDC to assume AWS role
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::391767403730:role/spacelift-gitworkflow-dev
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Install spacectl
+        uses: spacelift-io/setup-spacectl@main
+
+      - name: Install jq (ensure available)
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Fetch Spacelift API key from Secrets Manager
+        id: sf
+        run: |
+          v=$(aws secretsmanager get-secret-value \
+                --secret-id spacelift/api-key \
+                --query SecretString --output text)
+          echo "endpoint=$(echo "$v" | jq -r .endpoint)" >> $GITHUB_OUTPUT
+          echo "id=$(echo "$v" | jq -r .id)"         >> $GITHUB_OUTPUT
+          echo "secret=$(echo "$v" | jq -r .secret)" >> $GITHUB_OUTPUT
+
+      - name: Trigger Spacelift run
+        env:
+          SPACELIFT_API_KEY_ENDPOINT: ${{ steps.sf.outputs.endpoint }}
+          SPACELIFT_API_KEY_ID:       ${{ steps.sf.outputs.id }}
+          SPACELIFT_API_KEY_SECRET:   ${{ steps.sf.outputs.secret }}
+        run: |
+          if [ "${{ github.event.inputs.run_type }}" = "propose" ]; then
+            spacectl stack propose --id "$STACK_ID" --wait
+          else
+            spacectl stack deploy  --id "$STACK_ID" --wait
+          fi
+
