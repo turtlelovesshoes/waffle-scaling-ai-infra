@@ -123,7 +123,7 @@ module "eks" {
         example = {
           policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSViewPolicy"
           access_scope = {
-            namespaces = ["default,hello"]
+            namespaces = ["default,hello,aidemo"]
             type       = "namespace"
           }
         }
