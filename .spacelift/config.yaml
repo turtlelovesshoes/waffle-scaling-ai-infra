@@ -7,4 +7,5 @@ stack_defaults:
     TG_CLI_ARGS_apply: "--terragrunt-non-interactive"
   before_init:
     - terragrunt --version
-
+  before_destroy:
+    - terragrunt run-all destroy --terragrunt-non-interactive
