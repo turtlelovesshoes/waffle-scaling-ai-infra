@@ -19,7 +19,7 @@ output "demo_message" {
 }
 #### EKS CLUSTER ###
 provider "aws" {
-  region = "us-west-2" # change to your preferred region
+  region = "us-west-2"
 }
 
 # EKS cluster IAM role
@@ -101,7 +101,7 @@ module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "~> 20.0"
 
-  cluster_name    = "aidemo-dev"
+  cluster_name    = "ai-demo-dev"
   cluster_version = "1.32"
   
   subnet_ids = module.vpc.private_subnets
