@@ -99,7 +99,7 @@ module "vpc" {
 # EKS Cluster
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "20.8.4"
+  version = "~> 20.0"
 
   cluster_name    = "ai-demo-dev"
   cluster_version = "1.32"
@@ -111,6 +111,25 @@ module "eks" {
     Environment = "dev"
   }
   cluster_endpoint_public_access  = true
+  enable_cluster_creator_admin_permissions = true
+
+  access_entries = {
+    # One access entry with a policy associated
+    example = {
+      kubernetes_groups = []
+      principal_arn     = aws_iam_role.eks_node_role.arn
+
+      policy_associations = {
+        example = {
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSViewPolicy"
+          access_scope = {
+            namespaces = ["default"]
+            type       = "namespace"
+          }
+        }
+      }
+    }
+  }
 
   cluster_addons = {
     coredns = {
@@ -123,6 +142,10 @@ module "eks" {
       most_recent = true
     }
   }
+    # EKS Managed Node Group(s)
+  eks_managed_node_group_defaults = {
+    instance_types = ["m6i.large", "m5.large", "m5n.large", "m5zn.large"]
+  }
 
   eks_managed_node_groups = {
     dev_nodes = {
@@ -130,9 +153,9 @@ module "eks" {
       max_size     = 3
       desired_size = 2
 
-      instance_types = ["t3.medium"]
+      instance_types = ["t3.large"]
 
-      capacity_type = "ON_DEMAND"
+      capacity_type = "SPOT"
 
       iam_role_arn = aws_iam_role.eks_node_role.arn
 
