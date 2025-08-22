@@ -24,7 +24,7 @@ provider "aws" {
 
 # EKS cluster IAM role
 resource "aws_iam_role" "eks_cluster_role" {
-  name = "eks-cluster-role-dev"
+  name = "eks-cluster-role-ai-dev"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -45,7 +45,7 @@ resource "aws_iam_role_policy_attachment" "eks_cluster_policy" {
 
 # Node group IAM role
 resource "aws_iam_role" "eks_node_role" {
-  name = "eks-node-role-dev"
+  name = "eks-node-role-ai-dev"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -79,7 +79,7 @@ module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "5.1.2"
 
-  name = "eks-dev-vpc"
+  name = "eks-ai-dev-vpc"
   cidr = "10.0.0.0/16"
 
   azs             = ["us-west-2a", "us-west-2b", "us-west-2c"]
@@ -101,7 +101,7 @@ module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "~> 20.0"
 
-  cluster_name    = "ai-demo-dev"
+  cluster_name    = "aidemo-dev"
   cluster_version = "1.32"
   
   subnet_ids = module.vpc.private_subnets

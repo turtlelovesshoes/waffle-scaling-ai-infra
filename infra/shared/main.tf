@@ -121,7 +121,7 @@ module "eks" {
 
       policy_associations = {
         example = {
-          policy_arn = aws_iam_role.eks_node_role.policy_arn
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSViewPolicy"
           access_scope = {
             namespaces = ["default"]
             type       = "namespace"
