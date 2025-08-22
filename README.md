@@ -1,3 +1,6 @@
+# waffle-scaling-ai-infra
+AI Infrastructure Using CI/CD to explore new infra automation.
+
 # AI Sentiment + Speechify TTS Demo
 
 A developer-friendly demo that analyzes message sentiment (HuggingFace) and speaks bot replies using Speechify TTS. Ships locally with Docker Compose and to AWS with Terraform/ECS. Includes Spacelift + Terragrunt wiring so platform teams can run plans from the `main` branch.

@@ -1,0 +1,4 @@
+flask==2.3.3
+redis==4.5.4
+transformers==4.30.2
+torch==2.0.1
