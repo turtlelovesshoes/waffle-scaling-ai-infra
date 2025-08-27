@@ -12,7 +12,7 @@ resource "aws_instance" "my_web_app" {
   instance_type = "m3.xlarge" # <<<<<<<<<< Try changing this to m5.xlarge to compare the costs
 
   tags = {
-    Environment = "production"
+    Environment = "dev"
     Service = "web-app"
   }
 
@@ -30,6 +30,6 @@ resource "aws_lambda_function" "my_hello_world" {
 
   memory_size = 512
   tags = {
-    Environment = "Prod"
+    Environment = "dev"
   }
 }
