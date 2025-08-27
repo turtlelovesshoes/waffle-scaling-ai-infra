@@ -29,3 +29,13 @@ resource "null_resource" "prevent_local_apply" {
 }
 EOF
 }
+
+inputs = {
+  env = "dev"
+
+  # Default tags for all modules/resources
+  default_tags = {
+    "infracost" = "true"
+    "Environment" = "dev"
+  }
+}
