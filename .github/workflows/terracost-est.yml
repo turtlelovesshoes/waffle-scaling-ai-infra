@@ -1,0 +1,51 @@
+name: Terragrunt Plan & Cost Estimate
+
+on:
+  pull_request:
+    paths:
+      - "infra/**"   # only trigger when infra code changes
+  push:
+    branches:
+      - main
+
+jobs:
+  terragrunt:
+    name: Terragrunt Plan & Cost Estimate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::123456789012:role/github-terra-grunt
+          aws-region: us-west-2
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.0   # replace with your version
+
+      - name: Install Terragrunt
+        run: |
+          curl -L -o terragrunt https://github.com/gruntwork-io/terragrunt/releases/download/v0.60.26/terragrunt_linux_amd64
+          chmod +x terragrunt
+          sudo mv terragrunt /usr/local/bin/
+
+      - name: Terragrunt Init
+        run: terragrunt init
+        working-directory: ./infra/dev  # adjust to your terragrunt folder
+
+      - name: Terragrunt Plan
+        id: plan
+        run: terragrunt plan -out=tfplan.binary
+        working-directory: ./infra/dev
+
+      - name: Terraform Cost Estimate
+        uses: hashicorp/terraform-github-actions@v2
+        with:
+          tf_actions_subcommand: cost
+          terraform_version: 1.7.0
+          working-directory: ./infra/dev

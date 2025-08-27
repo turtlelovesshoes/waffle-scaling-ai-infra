@@ -191,3 +191,15 @@ output "cluster_endpoint" {
 output "cluster_certificate_authority_data" {
   value = module.eks.cluster_certificate_authority_data
 }
+
+### route53 ###
+# Fetch your existing VPC
+data "aws_vpc" "eks_vpc" {
+  id = module.vpc.vpc_id  # Replace with your cluster VPC
+}
+
+# Fetch the hosted zone (private)
+data "aws_route53_zone" "private_zone" {
+  name         = "designcodemonkey.space"  # Replace with your domain
+  private_zone = true
+}
