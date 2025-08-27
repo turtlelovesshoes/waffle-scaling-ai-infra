@@ -1,9 +1,22 @@
 terraform {
+  backend "s3" {}
   required_providers {
-    random = { source = "hashicorp/random" }
-    local  = { source = "hashicorp/local" }
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.0"
+    }
+    local = {
+      source  = "hashicorp/local"
+      version = "~> 2.0"
+
+    }
   }
 }
+
 
 resource "random_pet" "name" {
   length = 2
