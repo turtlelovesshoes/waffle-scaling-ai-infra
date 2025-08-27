@@ -44,7 +44,7 @@ jobs:
         working-directory: ./infra/dev
 
       - name: Terraform Cost Estimate
-        uses: hashicorp/terraform-github-actions@v2
+        uses: hashicorp/terraform-github-actions@v1
         with:
           tf_actions_subcommand: cost
           terraform_version: 1.7.0
