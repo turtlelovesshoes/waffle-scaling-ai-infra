@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Profile and Blog</title>
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #333;
+            color: #fff;
+        }
+
+        header {
+            background-color: #222;
+            color: #fff;
+            text-align: center;
+            padding: 1em;
+        }
+
+        nav {
+            background-color: #444;
+            padding: 1em;
+            display: flex;
+            justify-content: center;
+        }
+
+        nav a {
+            color: #fff;
+            text-decoration: none;
+            padding: 0.5em 1em;
+            margin: 0 1em;
+        }
+
+        section {
+            margin: 2em;
+        }
+
+        h2, p {
+            color: #eee;
+        }
+
+        /* Dark mode for job history */
+        #job-history, #skills, #projects, #profile, #socialskills {
+            background-color: #444;
+            padding: 1em;
+            border-radius: 10px;
+        }
+
+        .job {
+            border-bottom: 1px solid #666;
+            margin-bottom: 1em;
+            padding-bottom: 1em;
+        }
+
+
+        /* Skills section with neon green progress bars */
+        .skill {
+            margin-bottom: 1em;
+        }
+
+        .progress-bar {
+            background-color: #333;
+            height: 20px;
+            border-radius: 5px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+
+        .beginner, .intermediate, .expert {
+            height: 100%;
+            transition: width 0.5s;
+        }
+
+        .beginner {
+            width: 30%;
+            background-color: #4CAF50;
+        }
+
+        .intermediate {
+            width: 60%;
+            background-color: #4CAF50;
+        }
+
+        .expert {
+            width: 90%;
+            background-color: #4CAF50;
+        }
+
+        #socialskills .social-icon {
+            margin-right: 5px;
+            font-size: 24px; /* Adjust the size as needed */
+        }
+        .project-link {
+            color: #4CAF50;
+            text-decoration: underline;
+        }
+
+        #projects h1,
+        #projects h2 {
+            border-bottom: 1px solid #4CAF50;
+            padding-bottom: 0.5em;
+        }
+
+        #projects a {
+            display: block;
+            margin-top: 0.5em;
+            color: #4CAF50;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>Code Profile and Blog</h1>
+    </header>
+
+    <nav>
+        <a href="#" onclick="showProfile()">Profile</a>
+        <a href="#" onclick="showJobHistory()">Job History</a>
+        <a href="#" onclick="showSocialLinks()">Social Links</a>
+        <a href="#" onclick="showSkills()">Skills</a>
+        <a href="#" onclick="showProjects()">Projects</a>
+    </nav>
+
+<section id="profile">
+    <h2>Code Profile</h2>
+    <p>Welcome to my code profile. I love writing clean and efficient code. Here are some of my skills:</p>
+    <ul>
+        <li>Web Development (HTML, CSS, JavaScript)</li>
+        <li>Programming Languages (Python, Java, C++)</li>
+        <li>Frontend Frameworks (React, Vue.js)</li>
+        <li>Backend Frameworks (Node.js, Django)</li>
+        <li>Database Management (MySQL, MongoDB)</li>
+        <li>Version Control (Git)</li>
+        <li>Responsive Design and Cross-Browser Compatibility</li>
+        <li>Problem Solving and Algorithm Design</li>
+        <li>Site Reliability Engineering (SRE)</li>
+        <ul>
+            <li>Infrastructure as Code (Terraform, Ansible)</li>
+            <li>Containerization and Orchestration (Docker, Kubernetes)</li>
+            <li>Monitoring and Logging (Prometheus, Grafana, ELK Stack)</li>
+            <li>Incident Response and Post-Mortems</li>
+            <li>Automated Deployment and Continuous Integration/Continuous Deployment (CI/CD)</li>
+            <li>Capacity Planning and Performance Optimization</li>
+            <li>Security Best Practices in SRE</li>
+            <!-- Add more SRE-specific skills as needed -->
+        </ul>
+    </ul>
+</section>
+
+<section id="job-history">
+    <h2>Job History</h2>
+
+    <div class="job">
+        <h3>Core Data Infrastructure & DevOps Engineer</h3>
+        <p>Asana | San Francisco, CA | 02/2024 - 08/2025</p>
+        <ul>
+            <li>Exposed to Spark EMR clusters and Databricks through security remediation tasks.</li>
+            <li>Evaluated migration solutions for Airflow from custom IaC to EKS and AWS Managed Airflow, integrating OKTA and OAuth Proxy.</li>
+            <li>Implemented infrastructure-wide security enhancements, improving audit readiness.</li>
+            <li>Upgraded Kubernetes clusters from v1.21 to v1.31 across dev/staging/prod.</li>
+            <li>Upgraded PostgreSQL from 14 to 16, completed schema and performance testing.</li>
+            <li>Migrated secrets from Kubernetes to AWS Secrets Manager with automated validation and IAM policy deployment.</li>
+            <li>Re-engineered Docker CI/CD pipelines (GitHub Actions, Jenkins), speeding deployment by 200%.</li>
+            <li>Rolled out AI-powered chatbot for Finance and Customer Success teams, integrating it with IT infrastructure.</li>
+            <li>Enhanced observability stack (Grafana, PagerDuty) reducing MTTR by 30%.</li>
+            <li>Led engineer onboarding for Terraform Cloud, GitHub Actions, and Amazon ECR with documentation and training.</li>
+        </ul>
+    </div>
+
+    <div class="job">
+        <h3>Senior Cloud Infrastructure Engineer</h3>
+        <p>VMware  | May 2020 - Presemt | 4 years | Palo Alto, CA</p>
+        <p>.</p>
+        <ul>
+            <li>Spearheaded the deployment, management, and maintenance of various cutting-edge technologies, including ESXi, vCenter, vSAN, NSX-T, and Tanzu Kubernetes Grid, within the Cloud Infrastructure Services team at VMware.
+            <li> Actively participated in analyzing and interpreting incoming requests and projects, showcasing strong analytical and problem-solving skills in managing complex infrastructure services.
+            <li> Demonstrated being able to keep up with a rapid learning curve, acquiring a deep understanding of internal private cloud design and proficiently contributing to the support and maintenance of key internal services within the private cloud environment.
+            <li>Implemented robust tools, frameworks, and auto-remediation strategies to ensure optimal stability, performance, and availability of enterprise services, significantly enhancing operational efficiency and reducing downtime.
+            <li>Collaborated closely with various internal teams and business units, playing a pivotal role in the design, deployment, and support of critical company initiatives aligned with Objectives and Key Results (OKRs).
+            <li>Showcased expertise in deploying and managing virtual environments using the full VMware application stack, highlighting a comprehensive understanding of diverse virtualization technologies and platforms.
+            <li>Streamlined daily tasks through the implementation of automated processes using code deployment tools such as Ansible, Puppet, Salt, and VMware PowerCLI, significantly enhancing operational efficiency and reducing manual workload.
+            <li>Provided crucial leadership support to the Cloud Infrastructure Services team, working under the guidance of Jonathan Junkins, Senior Manager, and contributing to a dynamic, collaborative, and open work culture focused on creativity, ownership, and mutual respect.
+            <li>Successfully supported the team during the PST time zone, ensuring seamless day-to-day operations and providing critical assistance in troubleshooting and resolving complex technical issues.
+            <li>Demonstrated a strong commitment to personal and professional development, actively participating in ongoing training, conferences, and skill development initiatives, supported by VMware's comprehensive benefits package, including financial contributions to ongoing education and wellness reimbursement programs.
+            <li>Demonstrated excellence in maintaining and troubleshooting performance using vRealize Operations, InsightIQ, and other tools, showcasing a comprehensive understanding of performance monitoring and optimization in enterprise-level environments.
+            <li>Proactively managed necessary storage maintenance of Brocade and Storage technologies such as XIO, Unity, and Isilon, ensuring the seamless functioning of critical storage infrastructure components.
+            <li>Exemplified strong documentation skills, including creating detailed troubleshooting guides for Brocade Switch port issues, facilitating effective knowledge sharing and seamless collaboration within the team and across various business units.
+            <li>Played a crucial role in the architecture, deployment, and maintenance of Tanzu Kubernetes Grid, contributing to the seamless implementation and management of modern containerized applications and workloads within the VMware environment.
+            <li> Demonstrated proficiency with the Data Center Virtualization 2021 certification, showcasing a strong foundation in data center virtualization technologies and underscoring a commitment to continuous professional development and staying current with industry best practices.
+            <li> Highlighted expertise in cloud computing with the CompTIA Cloud Essentials+ certification, emphasizing a strong understanding of cloud principles and an ability to effectively manage and operate cloud environments.
+            <li> Leveraged advanced knowledge and skills in DevOps principles and practices through the completion of the Caltech CTME Post Graduate Program in DevOps, underscoring a strong foundation in DevOps methodologies and best practices.
+            <li> Successfully executed and documented automation tasks, including the updating of Jumpboxes with Ansible, showcasing a thorough understanding of playbook development and scheduling processes for automated tasks, contributing to increased operational efficiency and streamlined maintenance procedures within the VMware infrastructure.
+        </ul>
+    </div>
+
+    <div class="job">
+        <h3>Community Developer Moderator</h3>
+        <p>Snowflake Computing | February 2019 - May 2020 | 1 year 3 months | San Mateo, CA</p>
+        <p>Drove the adoption of a new community advocacy program on the Salesforce Community Cloud platform.</p>
+        <ul>
+            <li>Identifies knowledge-base gaps and provides tech knowledge to Snowflake’s cloud computing software service customers.</li>
+        </ul>
+    </div>
+
+    <div class="job">
+        <h3>Support Community Manager</h3>
+        <p>Mozilla | August 2016 - January 2019 | 2 years 5 months | Mountain View, CA</p>
+        <p>Supported and engaged 125 contributors to Mozilla’s Social Support and Forum Support programs.</p>
+        <ul>
+            <li>Organized efforts for higher quality contributions and training on changing tech culture for communities.</li>
+        </ul>
+    </div>
+
+    <div class="job">
+        <h3>Help Desk Support Administrator</h3>
+        <p>Mozilla | November 2013 - August 2016 | 2 years 9 months | Mountain View, CA</p>
+        <p>Supported efforts to launch Firefox OS, including work as an escalation manager in support forums.</p>
+        <ul>
+            <li>Planned community onboarding and processes for users, product managers, and engineers.</li>
+        </ul>
+    </div>
+
+    <div class="job">
+        <h3>Tier 2 Technical Representative</h3>
+        <p>Google via Nelson Technology | August 2012 - August 2013 | 1 year | Mountain View, CA</p>
+        <p>Provided product support for Google and its Global Business Collaboration Team. Exceeded case closure quotas while maintaining strong customer satisfaction.</p>
+    </div>
+
+    <div class="job">
+        <h3>HTML Integrator Contractor</h3>
+        <p>Aruba Networks | April 2012 - October 2012 | 6 months | Sunnyvale, CA</p>
+        <p>Led a project to integrate ArubaOS documents with the corporate website, making them searchable, organized, and mobile-friendly. Developed a strategy for dynamic online documentation based on trends and user experience.</p>
+    </div>
+
+    <div class="job">
+        <h3>Data Center Student Administrator/Senior Student Operations Analyst</h3>
+        <p>Santa Clara University | May 2010 - July 2012 | 2 years 2 months | Santa Clara, CA</p>
+        <p>Managed, repaired, and upgraded servers. Set up SQL databases and backups, and the maintenance process for diagnostic testing. Also wrote a Powershell script to troubleshoot network issues, among other duties.</p>
+    </div>
+</section>
+
+<section id="socialskills">
+    <h2>Social Links</h2>
+
+    <!-- GitHub Link with Bootstrap icon -->
+    <p>
+        <span class="social-icon"><i class="bi bi-github"></i></span>
+        <!-- Github -->
+<a class="btn btn-primary" style="background-color: #333333;" href="#!" role="button"
+><i class="fab fa-github"></i
+></a>
+        GitHub: <a href="https://github.com/turtlelovesshoes" target="_blank">Your GitHub Profile</a>
+    </p>
+
+    <!-- LinkedIn Profile Link with Bootstrap icon -->
+    <p>
+        <span class="social-icon"><i class="bi bi-linkedin"></i></span>
+        <a class="btn btn-primary" style="background-color: #0082ca;" href="#!" role="button"
+  ><i class="fab fa-linkedin-in"></i
+></a>
+        LinkedIn: <a href="https://www.linkedin.com/in/rachel-mcguigan-835b4528" target="_blank">Your LinkedIn Profile</a>
+    </p>
+
+    <!-- Email Address with Bootstrap icon -->
+    <p>
+        <span class="social-icon"><i class="bi bi-envelope"></i></span>
+        <a class="btn btn-primary" style="background-color: #dd4b39;" href="#!" role="button"
+  ><i class="fab fa-google"></i
+></a>
+        Email: <a href="mailto:saturnsmoon64@gmail.com">Email.  Me.</a>
+    </p>
+</section>
+
+<section id = "projects">
+    <h1>Links to recent projects using the code:</h1>
+
+    <h2>Python 2.7/3.8</h2>
+    <p>Recent: 2020 <a href="https://github.com/turtlelovesshoes/IoT_wearable">IoT Wearable Project</a> I am working in
+        tkinter and GPIO libraries for an IoT class I am taking at the local community college. Project due in May 2020</p>
+
+    <p>2015-2018 Unrecoverd Mozilla:work computer: Word count, word sort, Json_Dif crawler to check if a particular web
+        page had the most update plugin content that cross-referenced two HTML pages. Used python2.7</p>
+
+    <h2>Ipython and Jupiter notebooks:</h2>
+    <a href="https://github.com/turtlelovesshoes/SUMOTwitterInsights">SUMO Community Twitter Insights</a>
+    <a href="https://github.com/turtlelovesshoes/Social-Metrics">Social Support Monthly Metrics by category</a>
+
+    <h2>C</h2>
+    <a href="https://github.com/turtlelovesshoes/schoolcode">Santa Clara University Coding by Rachel McGuigan</a>
+    <p><a href="https://github.com/turtlelovesshoes/schoolcode/tree/master/coen146">Local Cache server for Network Coding
+            class 2016 </a></p>
+
+    <h2>Java</h2>
+    <a href="https://github.com/turtlelovesshoes/ShortestPathNetworkAlgorithmsJava">Shortest Path and other Network
+        Algorithms from grad school classes in 2015 and published again in 2020</a>
+
+    <h2>SQL</h2>
+    <p>- most recently in question answers and content written for my role in <a
+            href="https://github.com/turtlelovesshoes/Snowflakework/blob/master/worksheets_examples.MD">Stack Overflow
+            for Snowflake 2019-2020 2018</a></p>
+    <a href="https://github.com/turtlelovesshoes/Kitsune-SQL-queries/wiki">2015-2017 SUMO Django DB SQL for Community
+        Success Metrics</a>
+    <a href="https://github.com/turtlelovesshoes/Firefox64TwitterReport">Firefox Product Feedback Trends based on Twitter
+        Support Tweets #sumosupport</a>
+
+    <h2>HTML5/CSS</h2>
+    <p>2018 Historical from scratch templates for community newsletters - screenshots in the readme will have expired
+        need to see the GitHub pages. <a
+            href="https://github.com/turtlelovesshoes/Social-Email-Template">Repository of 12 months of Social
+            Support's monthly newsletter from scratch</a></p>
+
+    <p>2017[updated 2020]CSS I took a Code Academy class on CSS and HTML5 that had 4 designs that I coded from scratch
+        with professional feedback from Code Academy pro: <a
+            href="https://github.com/turtlelovesshoes/My-Times/tree/master/resources">My Times Online Newspaper Page</a>
+        <a href="https://github.com/turtlelovesshoes/Unit4_TeaCozy/blob/master/indexupdated.html">Tea Shop "Tea Cozy"
+            Main Website</a></p>
+
+    <h2>JavaScript</h2>
+    <a href="https://github.com/turtlelovesshoes/ArubaOS-Documentation-project">2013 Javascript Search engine for
+        Documentation Site ArubaOS, now HP</a>
+
+    <a href="https://github.com/turtlelovesshoes/schoolcode/tree/c877f09a69444f0a2f62c533100c91a3ef776a25/testjs">2011
+        Jquery to learn how to enhance my phpmyadmin site and javascript game</a>
+
+    <p>2008-2011 School went over HTML, CSS, Javascript, Java and C ask for transcript</p>
+
+    <h2>Bootstrap</h2>
+    <a href="https://github.com/turtlelovesshoes/Social-Email-Template/blob/10b24b1aa579550aedeeffe5fac18476935e1ffe/October_monthlyemail.html">2018
+        Oct, HTML newsletter:</a>
+
+    <a href="https://github.com/turtlelovesshoes/Social-Email-Template/blob/10b24b1aa579550aedeeffe5fac18476935e1ffe/September18.html">September
+        Bootstrap Community Email Template</a>
+
+    <h2>[2012] PHP/mysql open source admin</h2>
+    <a href="https://github.com/turtlelovesshoes/ConditionDive-ReportingSite">Scuba Diving Conditions Crowdsourcing
+        Site</a>
+
+        <h2>Asana DevOps Projects</h2>
+        <ul>
+            <li>
+                <strong>GitOps + CI/CD for 12 Enterprise Applications:</strong> Implemented 3 GitHub Actions workflows integrated with ArgoCD and EKS. Automated image builds, deployment, and lint validation. Resulted in 200% faster deployment cycles.
+            </li>
+            <li>
+                <strong>Enterprise Team Infrastructure Management with Terraform HCP:</strong> Standardized provisioning, enforced security policies, and reduced configuration drift.
+            </li>
+        </ul>
+
+        <h2>VMware Projects</h2>
+        <ul>
+            <li><strong>Ansible Tower Automation for OS Maintenance:</strong> Reduced manual patching by 75%, strengthened compliance, and automated Linux VM updates and jumpbox hardening.</li>
+            <li><strong>Tanzu Kubernetes Grid Adoption & Workload Migration:</strong> Migrated 500+ machines, containerized 20% of workloads, and decommissioned 40% of unused infrastructure.</li>
+            <li><strong>CI/CD Enablement for Hybrid Estates:</strong> Integrated Terraform, Jenkins, and Ansible to accelerate deployments and reduce rollback frequency.</li>
+        </ul>
+
+    <!-- Additional Projects -->
+    <h2>Additional Projects</h2>
+    <p>Automation Expereince</p>
+    <ol>
+        <li></li>
+    </ol>
+    <p>2022 Save the Frogs - Project that used a Raspberry Pi and an APCPU Back up battery to keep the water pump valve closed for the Skylonda Mutual Water Comapny Water Cleaning system during power outages. The Frogs were saved in the reservor by keeping the large amounts of chemicals that would be resleased if that valve was left open. ith a Google Drive document</p>
+         <a href="https://docs.google.com/document/d/15d33JZf5UEj8vYR2s7mTvQxa-ETfTpMq4Ow0RTHrbJk/edit?pli=1">Drive Doc with Images, Code and Summary for setup</a>
+        <p>Project: 🐸🛟 Frog Preserver [aka Save the Frogs, Toad-ally] 
+            Date: 2023-06-25
+            
+            Technical: A Raspberry Pi that detects the loss of utility power (PG&E) and switches off an intake valve to prevent a high concentration of chlorine overflowing into the reservoir of Skylonda Water Mutual Company… and killing the frogs and other wildlife.
+            
+            Functional: Build a HW device which detects the loss of power (pge/grid) and shuts the main water feed valve from CalWater before an intake tank overflows…
+            Chloramine-ating our pond and killing all the tadpoles/frogs. 🐸💀💀💀
+            Mixing treated drinking water into our pond, wasting $ and resources
+            
+            Team (Volunteers)
+            John Carnes, SWMC President, Concerned Citizen, lead 🐸🛟
+            Rachel McGuigan, Software Engineer, Pi HW Donation
+            Scott Allen, Software Engineer, Pi HW Donation
+            Jeff Beaman, Software Engineer, ⚡engineer
+                jeffrey.beaman@gmail.com
+        </p>
+            
+         <p>2022 Devops Post Graduate Cal Tech project 1 and 2:
+        <a href="https://drive.google.com/file/d/1xAvInyOdUiijVpWxSTVtIvoajDlBm4KV/view?pli=1">Project 1: Deployment of Wordpress Site On Kubernetes Cluster using Jenkins</a>
+        <p>Description: </p>>
+        <a href="https://docs.google.com/document/d/1kOUAUnKO1LTALDL0QvZyhLGWkYrh8SI4eSaQy5qBgIA/edit">Project 2: Ansible Project to deploy Infrastrucutre stack</a>
+        <p>Description: Deployment of DevOps Tool Stack on Cloud Infrastructure
+            Instructions
+            You are a DevOps engineer at XYZ Ltd. Your company comes up with a new client who needs certain DevOps tools like Jenkins, Maven, JDK, and Docker installed on their build server. For this you can use any Configuration Management Tool to perform installation.
+            Steps to Perform:
+            Establishing configuration management master connectivity with new build server
+            Validating connectivity from master to slave machine
+            Preparing IaaC scripts to perform installation of DevOps tools
+            Executing scripts to perform installation on remote machines
+            Validating installation post scripts execution
+
+    </p>
+
+    <p>2022 -2023 Elect Foster City Council Member elect art for council website wayback machine:
+        <a href="https://web.archive.org/web/20230215192830/http://artforcouncil.com/">Wayback Machine</a>
+        and Git project link:
+        <a href="https://github.com/Anum7/citycouncilmain">City Council Main</a>
+    </p>
+
+</section>
+
+<section id="skills">
+    <h2>Skills</h2>
+
+    <div class="skill">
+        <h3>Ansible</h3>
+        <div class="progress-bar">
+            <div class="intermediate"></div>
+        </div>
+    </div>
+
+    <div class="skill">
+        <h3>Kubernetes</h3>
+        <div class="progress-bar">
+            <div class="expert"></div>
+
+        </div>
+    </div>
+
+    <div class="skill">
+        <h3>Puppet</h3>
+        <div class="progress-bar">
+            <div class="intermediate"></div>
+        </div>
+    </div>
+
+    <div class="skill">
+        <h3>Python</h3>
+        <div class="progress-bar">
+            <div class="intermediate"></div>
+        </div>
+    </div>
+
+    <div class="skill">
+        <h3>Docker</h3>
+        <div class="progress-bar">
+            <div class="expert"></div>
+        </div>
+    </div>
+
+    <div class="skill">
+        <h3>ESXi vSphere</h3>
+        <div class="progress-bar">
+            <div class="expert"></div>
+        </div>
+    </div>
+
+    <div class="skill">
+        <h3>NSX-T</h3>
+        <div class="progress-bar">
+            <div class="expert"></div>
+        </div>
+    </div>
+
+    <div class="skill">
+        <h3>vCenter</h3>
+        <div class="progress-bar">
+            <div class="expert"></div>
+        </div>
+    </div>
+
+    <div class="skill">
+        <h3>Terraform</h3>
+        <div class="progress-bar">
+            <div class="expert></div>
+        </div>
+    </div>
+
+    <div class="skill">
+        <h3>GCP</h3>
+        <div class="progress-bar">
+            <div class="beginner"></div>
+        </div>
+    </div>
+
+    <div class="skill">
+        <h3>AWS</h3>
+        <div class="progress-bar">
+            <div class="beginner"></div>
+            <div class="intermediate"></div>
+        </div>
+    </div>
+
+    <div class="skill">
+        <h3>Azure</h3>
+        <div class="progress-bar">
+            <div class="beginner"></div>
+    </div>
+
+    <div class="skill">
+        <h3>EMC DEll Storage</h3>
+        <div class="progress-bar">
+            <div class="intermediate"></div>
+    </div>
+
+</section>
+
+<section id="certifications">
+    <h2>Certifications – Relevant (More on LinkedIn)</h2>
+
+    <div class="certification">
+        <h3>Post Graduate Program in DevOps</h3>
+        <p><strong>Provider:</strong> Simplilearn</p>
+        <p><strong>Issued:</strong> May 2022</p>
+        <p><strong>Credential ID:</strong> ff725a1e-a30f-4d44-9c4c-9165255e0f5a</p>
+    </div>
+
+    <div class="certification">
+        <h3>AWS Certified Cloud Practitioner</h3>
+        <p><strong>Provider:</strong> AWS</p>
+    </div>
+
+    <div class="certification">
+        <h3>CompTIA Cloud Essentials+</h3>
+        <p><strong>Provider:</strong> CompTIA</p>
+        <p><strong>Issued:</strong> July 2021</p>
+    </div>
+
+    <div class="certification">
+        <h3>VMware Certified Professional – Data Center Virtualization 2020</h3>
+        <p><strong>Provider:</strong> VMware</p>
+        <p><strong>Issued:</strong> October 2020</p>
+    </div>
+
+    <div class="certification">
+        <h3>VMware vSphere 6.7 Foundations</h3>
+        <p><strong>Provider:</strong> VMware</p>
+        <p><strong>Issued:</strong> July 2020</p>
+    </div>
+
+    <div class="certification">
+        <h3>IoT Foundations: Operating System Applications</h3>
+        <p><strong>Issued:</strong> May 2020</p>
+    </div>
+
+    <div class="certification">
+        <h3>Snowflake Fundamentals Training</h3>
+        <p><strong>Issued:</strong> December 2019</p>
+    </div>
+
+    <div class="certification">
+        <h3>Community Manager Basics</h3>
+        <p><strong>Issued:</strong> January 2017</p>
+    </div>
+
+    <div class="certification">
+        <h3>Community Program Essentials</h3>
+        <p><strong>Issued:</strong> May 2016</p>
+    </div>
+
+    <div class="certification">
+        <h3>Certified Scrum Product Owner</h3>
+        <p><strong>Provider:</strong> Collabnet</p>
+        <p><strong>Issued:</strong> September 2015</p>
+    </div>
+
+    <div class="certification">
+        <h3>VMware Cloud Foundation: Deploy, Configure, Manage [V5.0]</h3>
+        <p><strong>Format:</strong> On Demand</p>
+    </div>
+</section>
+
+
+<script>
+    function showProfile() {
+        showSection('profile');
+    }
+
+    function showSocialLinks() {
+        showSection('socialskills');
+    }
+
+    function showSkills() {
+        showSection('skills');
+    }
+
+    function showJobHistory() {
+        showSection('job-history');
+    }
+
+    function showProjects() {
+        showSection('projects');
+    }
+
+    function showSection(sectionId) {
+        const sections = ['profile', 'socialskills', 'skills', 'job-history', 'projects'];
+
+        sections.forEach(id => {
+            const section = document.getElementById(id);
+            section.style.display = id === sectionId ? 'block' : 'none';
+        });
+    }
+</script>
+<!-- Bootstrap Icons JS (add this script at the end of the body) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+
+</html>
