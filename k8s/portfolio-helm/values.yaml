@@ -1,0 +1,35 @@
+awsAccountId: "123456789012"
+awsRegion: "us-west-2"
+
+replicaCount: 1
+
+image:
+  repository: "{{ .Values.awsAccountId }}.dkr.ecr.{{ .Values.awsRegion }}.amazonaws.com/portfolio"
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: LoadBalancer
+  port: 80
+  targetPort: 8000
+
+env:
+  SECRET_KEY: your-secret-key
+  # This will be overridden at runtime using a template from postgresql chart
+  CLOUD_DB_URI: ""
+
+postgresql:
+  enabled: true
+  auth:
+    username: flask_user
+    password: flask_password
+    database: flask_db
+  primary:
+    persistence:
+      enabled: false # For dev; set to true with PVC in prod
+
+serviceAccount:
+  create: true
+  name: "portfolio-sa"
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::{ .Values.awsAccountId}}:role/portfolio

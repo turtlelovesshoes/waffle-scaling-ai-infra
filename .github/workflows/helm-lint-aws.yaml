@@ -1,0 +1,39 @@
+name: Helm Lint with AWS Setup
+
+on:
+    push:
+        paths:
+            - 'k8s/portfolio-helm/**'
+            - 'k8s/aidemo-helm/**'
+    pull_request:
+        paths:
+            - 'k8s/portfolio-helm/**'
+            - 'k8s/aidemo-helm/**'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up AWS CLI
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-region: us-east-1 # change to your region
+          role-to-assume: arn:aws:iam::3917674037:role/your-github-actions-role # optional if using OIDC or role assumption
+          # Alternatively use aws-access-key-id and aws-secret-access-key as GitHub secrets
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.27.3' # Adjust to match your Kubernetes cluster version
+
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.12.0 # Adjust to your Helm version
+
+      - name: Helm lint
+        run: helm lint k8s/portfolio-helm
