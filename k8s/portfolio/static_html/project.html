@@ -5,8 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Code Profile and Blog</title>
-      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
 
     <style>
         body {
@@ -21,33 +20,87 @@
             background-color: #222;
             color: #fff;
             text-align: center;
-            padding: 1em;
+            padding: 0.5em;
         }
 
-        nav {
-            background-color: #444;
-            padding: 1em;
+        /* Navbar container */
+        .nav-container {
             display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            background-color: #444;
+            padding: 0.5em 1em;
+            position: relative;
+        }
+
+        /* Hamburger toggle */
+        .nav-toggle {
+            display: none;
+            flex-direction: column;
+            justify-content: space-between;
+            width: 30px;
+            height: 25px;
+            cursor: pointer;
+            margin-left: auto;
+        }
+
+        .nav-toggle span {
+            display: block;
+            height: 3px;
+            width: 100%;
+            background: #fff;
+            border-radius: 2px;
+        }
+
+        /* Links container */
+        .nav-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5em;
             justify-content: center;
         }
 
-        nav a {
+        .nav-links a {
             color: #fff;
             text-decoration: none;
             padding: 0.5em 1em;
-            margin: 0 1em;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+                flex-direction: column;
+                width: 100%;
+                text-align: center;
+                margin-top: 0.5em;
+            }
+
+            .nav-links.show {
+                display: flex;
+            }
+
+            .nav-toggle {
+                display: flex;
+            }
         }
 
         section {
             margin: 2em;
         }
 
-        h2, p {
+        h2,
+        p {
             color: #eee;
         }
 
         /* Dark mode for job history */
-        #job-history, #skills, #projects, #profile, #socialskills {
+        #job-history,
+        #skills,
+        #projects,
+        #profile,
+        #socialskills {
             background-color: #444;
             padding: 1em;
             border-radius: 10px;
@@ -58,7 +111,6 @@
             margin-bottom: 1em;
             padding-bottom: 1em;
         }
-
 
         /* Skills section with neon green progress bars */
         .skill {
@@ -73,7 +125,9 @@
             overflow: hidden;
         }
 
-        .beginner, .intermediate, .expert {
+        .beginner,
+        .intermediate,
+        .expert {
             height: 100%;
             transition: width 0.5s;
         }
@@ -95,8 +149,9 @@
 
         #socialskills .social-icon {
             margin-right: 5px;
-            font-size: 24px; /* Adjust the size as needed */
+            font-size: 24px;
         }
+
         .project-link {
             color: #4CAF50;
             text-decoration: underline;
@@ -123,39 +178,56 @@
         <h1>Code Profile and Blog</h1>
     </header>
 
-    <nav>
-        <a href="#" onclick="showProfile()">Profile</a>
-        <a href="#" onclick="showJobHistory()">Job History</a>
-        <a href="#" onclick="showSocialLinks()">Social Links</a>
-        <a href="#" onclick="showSkills()">Skills</a>
-        <a href="#" onclick="showProjects()">Projects</a>
+    <nav class="nav-container">
+        <div class="nav-toggle" onclick="toggleNav()">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        <div class="nav-links">
+            <a href="#" onclick="showAboutme()">About</a>
+            <a href="#" onclick="showProfile()">Profile</a>
+            <a href="#" onclick="showJobHistory()">Job History</a>
+            <a href="#" onclick="showSocialLinks()">Social Links</a>
+            <a href="#" onclick="showSkills()">Skills</a>
+            <a href="#" onclick="showProjects()">Projects</a>
+            <a href="/blog">Blog</a>
+        </div>
     </nav>
+
+<section id="about-me">
+    <h2>About Me</h2>
+    <p>
+        Hi, I’m Rachel McGuigan, a Senior Cloud Infrastructure and DevOps Engineer with a passion for designing scalable, reliable, and automated systems. I specialize in translating complex technical challenges into efficient, practical solutions while collaborating across teams and mentoring others. My focus is on cloud infrastructure, DevOps, and SRE practices that drive innovation, performance, and operational excellence in fast-paced, evolving environments.
+    </p>
+</section>
 
 <section id="profile">
     <h2>Code Profile</h2>
-    <p>Welcome to my code profile. I love writing clean and efficient code. Here are some of my skills:</p>
+    <p>Welcome to my code profile! I specialize in building clean, scalable, and reliable solutions across cloud, DevOps, and web development.</p>
     <ul>
-        <li>Web Development (HTML, CSS, JavaScript)</li>
-        <li>Programming Languages (Python, Java, C++)</li>
-        <li>Frontend Frameworks (React, Vue.js)</li>
-        <li>Backend Frameworks (Node.js, Django)</li>
-        <li>Database Management (MySQL, MongoDB)</li>
-        <li>Version Control (Git)</li>
-        <li>Responsive Design and Cross-Browser Compatibility</li>
-        <li>Problem Solving and Algorithm Design</li>
-        <li>Site Reliability Engineering (SRE)</li>
-        <ul>
-            <li>Infrastructure as Code (Terraform, Ansible)</li>
-            <li>Containerization and Orchestration (Docker, Kubernetes)</li>
-            <li>Monitoring and Logging (Prometheus, Grafana, ELK Stack)</li>
-            <li>Incident Response and Post-Mortems</li>
-            <li>Automated Deployment and Continuous Integration/Continuous Deployment (CI/CD)</li>
-            <li>Capacity Planning and Performance Optimization</li>
-            <li>Security Best Practices in SRE</li>
-            <!-- Add more SRE-specific skills as needed -->
-        </ul>
+        <li>**Web Development:** HTML, CSS, JavaScript, Responsive Design, Cross-Browser Compatibility</li>
+        <li>**Programming Languages:** Python, Java, C++, SQL, Bash/Shell Scripting</li>
+        <li>**Frontend Frameworks:** React, Vue.js</li>
+        <li>**Backend Frameworks:** Node.js, Django</li>
+        <li>**Database Management:** MySQL, MongoDB, PostgreSQL</li>
+        <li>**Version Control:** Git</li>
+        <li>**Site Reliability Engineering (SRE):**
+            <ul>
+                <li>Infrastructure as Code: Terraform, Ansible, Puppet, Chef</li>
+                <li>Containerization & Orchestration: Docker, Kubernetes, Tanzu</li>
+                <li>Monitoring & Logging: Prometheus, Grafana, ELK Stack, Splunk, PagerDuty</li>
+                <li>Automated Deployment & CI/CD pipelines</li>
+                <li>Incident Response, Post-Mortems, & Capacity Planning</li>
+                <li>Security Best Practices & Performance Optimization</li>
+            </ul>
+        </li>
+        <li>**Cloud Platforms:** AWS, Azure, Google Cloud, Multi-Cloud Environments</li>
+        <li>**Software Architecture & Design Patterns**</li>
+        <li>**Network Optimization & Migration Strategies**</li>
     </ul>
 </section>
+
 
 <section id="job-history">
     <h2>Job History</h2>
@@ -249,37 +321,40 @@
     </div>
 </section>
 
-<section id="socialskills">
+<section id="socialskills" style="display:none;">
     <h2>Social Links</h2>
 
-    <!-- GitHub Link with Bootstrap icon -->
+    <!-- GitHub -->
     <p>
         <span class="social-icon"><i class="bi bi-github"></i></span>
-        <!-- Github -->
-<a class="btn btn-primary" style="background-color: #333333;" href="#!" role="button"
-><i class="fab fa-github"></i
-></a>
         GitHub: <a href="https://github.com/turtlelovesshoes" target="_blank">Your GitHub Profile</a>
     </p>
 
-    <!-- LinkedIn Profile Link with Bootstrap icon -->
+    <!-- LinkedIn -->
     <p>
         <span class="social-icon"><i class="bi bi-linkedin"></i></span>
-        <a class="btn btn-primary" style="background-color: #0082ca;" href="#!" role="button"
-  ><i class="fab fa-linkedin-in"></i
-></a>
         LinkedIn: <a href="https://www.linkedin.com/in/rachel-mcguigan-835b4528" target="_blank">Your LinkedIn Profile</a>
     </p>
 
-    <!-- Email Address with Bootstrap icon -->
+    <!-- Instagram -->
+    <p>
+        <span class="social-icon"><i class="bi bi-instagram"></i></span>
+        Instagram: <a href="https://www.instagram.com/saturnsmoon64/" target="_blank">saturnsmoon64</a>
+    </p>
+
+    <!-- YouTube -->
+    <p>
+        <span class="social-icon"><i class="bi bi-youtube"></i></span>
+        YouTube: <a href="https://www.youtube.com/@jellybeancloud101/featured" target="_blank">jellybeancloud101</a>
+    </p>
+
+    <!-- Email -->
     <p>
         <span class="social-icon"><i class="bi bi-envelope"></i></span>
-        <a class="btn btn-primary" style="background-color: #dd4b39;" href="#!" role="button"
-  ><i class="fab fa-google"></i
-></a>
-        Email: <a href="mailto:saturnsmoon64@gmail.com">Email.  Me.</a>
+        Email: <a href="mailto:saturnsmoon64@gmail.com">Email Me</a>
     </p>
 </section>
+
 
 <section id = "projects">
     <h1>Links to recent projects using the code:</h1>
@@ -574,38 +649,47 @@
 
 
 <script>
-    function showProfile() {
-        showSection('profile');
-    }
+        function toggleNav() {
+            const links = document.querySelector('.nav-links');
+            links.classList.toggle('show');
+        }
 
-    function showSocialLinks() {
-        showSection('socialskills');
-    }
+        function showAboutme() {
+            showSection('about-me');
+        }
 
-    function showSkills() {
-        showSection('skills');
-    }
+        function showProfile() {
+            showSection('profile');
+        }
 
-    function showJobHistory() {
-        showSection('job-history');
-    }
+        function showSocialLinks() {
+            showSection('socialskills');
+        }
 
-    function showProjects() {
-        showSection('projects');
-    }
+        function showSkills() {
+            showSection('skills');
+        }
 
-    function showSection(sectionId) {
-        const sections = ['profile', 'socialskills', 'skills', 'job-history', 'projects'];
+        function showJobHistory() {
+            showSection('job-history');
+        }
 
-        sections.forEach(id => {
-            const section = document.getElementById(id);
-            section.style.display = id === sectionId ? 'block' : 'none';
-        });
-    }
-</script>
-<!-- Bootstrap Icons JS (add this script at the end of the body) -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        function showProjects() {
+            showSection('projects');
+        }
 
+        function showSection(sectionId) {
+            const sections = ['profile', 'socialskills', 'skills', 'job-history', 'projects', 'about-me'];
+            sections.forEach(id => {
+                const section = document.getElementById(id);
+                if (section) section.style.display = id === sectionId ? 'block' : 'none';
+            });
+        }
+
+        // Optional: Show About Me section by default
+        showAboutme();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>
