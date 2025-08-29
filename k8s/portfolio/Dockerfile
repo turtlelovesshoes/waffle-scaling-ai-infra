@@ -6,7 +6,7 @@ WORKDIR /app
 
 # Copy the HTML files to a designated static content directory
 COPY ./static_html/ /app/static/
-g
+
 # Copy the Python application files
 COPY ./python_app/ /app/
 
@@ -20,4 +20,4 @@ EXPOSE 8000
 # Command to run your Python application (e.g., with Gunicorn or Uvicorn)
 # This example assumes a Flask app named 'app.py' within 'python_app' folder
 # and uses Gunicorn to serve it, potentially serving static files through Flask as well.
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8000", "app:app"]
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8000", "python_app.app:app"]

@@ -4,7 +4,7 @@ set -euo pipefail
 # Accept app name as first argument, default to "mkdocs"
 APP_NAME="${1:-portfolio}"
 IMAGE_NAME="$APP_NAME"
-CONTAINER_NAME="${APP_NAME}-test"
+CONTAINER_NAME="${APP_NAME}"
 TEST_PROJECT="${APP_NAME}"
 
 echo "============================="
@@ -17,21 +17,32 @@ ARCH_TYPE=$(uname -m)
 echo "[INFO] Detected OS: $OS_TYPE"
 echo "[INFO] Detected Architecture: $ARCH_TYPE"
 
-# Determine Docker build command
-BUILD_CMD="docker build -t $IMAGE_NAME ."
+# Determine project root
 if [[ "$OS_TYPE" == "msys"* || "$OS_TYPE" == "cygwin"* || "$OS_TYPE" == "mingw"* ]]; then
-    echo "[INFO] Windows detected → using Buildx with linux/amd64"
-    BUILD_CMD="docker buildx build --platform linux/amd64 --load -t $IMAGE_NAME ."
     PROJECT_ROOT="$(pwd -W)"  # convert Git Bash path to Windows style
-    echo "$PROJECT_ROOT"
 else
     PROJECT_ROOT="$(pwd)"
-    echo "$PROJECT_ROOT"
 fi
+echo "$PROJECT_ROOT"
 
 # Step 1: Build image
 echo "-----------------------------"
 echo "🚀 Step 1: Building image"
+
+# Detect Docker OSType
+DOCKER_OSTYPE=$(docker info --format '{{.OSType}}' 2>/dev/null || echo "unknown")
+
+if [[ "$DOCKER_OSTYPE" == "linux" ]]; then
+    BUILD_CMD="docker buildx build --platform linux/amd64 --load -t $IMAGE_NAME $APP_NAME"
+    echo "[INFO] Docker Linux engine detected. Using buildx."
+elif [[ "$DOCKER_OSTYPE" == "windows" ]]; then
+    BUILD_CMD="docker build -t $IMAGE_NAME $APP_NAME"
+    echo "[WARNING] Docker Windows engine detected. Building without --platform (Windows image)."
+else
+    echo "[ERROR] Could not detect Docker engine type. Is Docker running?"
+    exit 1
+fi
+
 echo "Running command: $BUILD_CMD"
 eval $BUILD_CMD
 echo "[SUCCESS] Image '$IMAGE_NAME' built."
@@ -51,9 +62,10 @@ echo "-----------------------------"
 echo "▶️ Step 3: Running container '$CONTAINER_NAME'"
 docker run --rm -it \
     --name $CONTAINER_NAME \
-    -v "${PROJECT_PATH}:/docs" \
+    -v "${PROJECT_PATH}:/app" \
     -p 8000:8000 \
-    $IMAGE_NAME serve -a 0.0.0.0:8000
+    $IMAGE_NAME
+echo "[SUCCESS] Container '$CONTAINER_NAME' is running."
 
 echo "============================="
 echo " 🎉 ${APP_NAME}'s container exited. Workflow finished."
