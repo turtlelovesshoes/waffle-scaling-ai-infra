@@ -227,7 +227,7 @@ resource "aws_route53_zone_association" "eks_private_zone" {
 
 ## we need to deploy our  application called portfolio
 data "aws_eks_cluster_auth" "example" {
-  name = module.eks.cluster.name
+  name = module.eks.cluster_name
 }
 ###############################
 # Kubernetes Provider
