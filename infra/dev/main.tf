@@ -257,6 +257,7 @@ resource "aws_s3_bucket" "helm_charts" {
     {
       Environment = "dev"
       ManagedBy   = "Terraform"
+      Service     = "portfolio"
     },
     var.default_tags
   )
@@ -266,6 +267,7 @@ resource "aws_s3_bucket" "helm_charts" {
 resource "aws_s3_bucket_lifecycle_configuration" "helm_charts_lifecycle" {
   bucket = aws_s3_bucket.helm_charts.id
 
+  # Abort incomplete multipart uploads after 7 days
   rule {
     id     = "AbortIncompleteMultipartUpload"
     status = "Enabled"
@@ -274,6 +276,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "helm_charts_lifecycle" {
     }
   }
 
+  # Expire non-current object versions after 30 days
   rule {
     id     = "ExpireNonCurrentVersions"
     status = "Enabled"
@@ -282,6 +285,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "helm_charts_lifecycle" {
     }
   }
 
+  # Transition older objects to Intelligent-Tiering after 30 days
   rule {
     id     = "TransitionToIntelligentTiering"
     status = "Enabled"
