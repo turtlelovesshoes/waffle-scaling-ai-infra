@@ -1,11 +1,11 @@
-awsAccountId: "123456789012"
+awsAccountId: "391767403730"
 awsRegion: "us-west-2"
 
 replicaCount: 1
 
 image:
   repository: "{{ .Values.awsAccountId }}.dkr.ecr.{{ .Values.awsRegion }}.amazonaws.com/portfolio"
-  tag: latest
+  tag: rachelm-deploysite-48544db4eefbf6df03bd831743a041c318cb59fd
   pullPolicy: IfNotPresent
 
 service:
