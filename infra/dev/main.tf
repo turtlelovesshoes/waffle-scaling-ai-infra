@@ -135,7 +135,7 @@ module "eks" {
         example = {
           policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSViewPolicy"
           access_scope = {
-            namespaces = ["default", "aidemo"]
+            namespaces = ["default", "aidemo", "argocd"]
             type       = "namespace"
           }
         }
@@ -233,7 +233,7 @@ resource "aws_ecr_repository" "portfolio" {
 ##############################
 resource "helm_release" "argocd" {
   name       = "argocd"
-  namespace  = kubernetes_namespace.argocd.metadata[0].name
+  namespace  = "argocd"
   repository = "https://argoproj.github.io/argo-helm"
   chart      = "argo-cd"
   version    = "5.45.0"
