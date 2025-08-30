@@ -5,6 +5,14 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
+    kubernetes = {
+      source  = "hashicorp/kubernetes"
+      version = "~> 2.23"  # latest stable
+    }
+    helm = {
+      source  = "hashicorp/helm"
+      version = "~> 2.9"   # latest stable
+    }
     random = {
       source  = "hashicorp/random"
       version = "~> 3.0"
@@ -12,7 +20,6 @@ terraform {
     local = {
       source  = "hashicorp/local"
       version = "~> 2.0"
-
     }
   }
 }
@@ -135,7 +142,7 @@ module "eks" {
         example = {
           policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSViewPolicy"
           access_scope = {
-            namespaces = ["default", "aidemo"]
+            namespaces = ["default", "aidemo", "argocd"]
             type       = "namespace"
           }
         }
@@ -219,40 +226,90 @@ resource "aws_route53_zone_association" "eks_private_zone" {
 }
 
 ## we need to deploy our  application called portfolio
+data "aws_eks_cluster_auth" "example" {
+  name = module.eks.cluster_name
+}
+###############################
+# Kubernetes Provider
+##############################
 
-#Ecr build repository
-resource "aws_ecr_repository" "portfolio" {
-  name = "portfolio"
-  image_scanning_configuration {
-    scan_on_push = true
+provider "kubernetes" {
+  host                   = module.eks.cluster_endpoint
+  cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
+  token                  = data.aws_eks_cluster_auth.example.token
+}
+
+##############################
+# Helm Provider
+##############################
+
+provider "helm" {
+  kubernetes {
+    host                   = module.eks.cluster_endpoint
+    cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
+    token                  = data.aws_eks_cluster_auth.example.token
   }
 }
 
+##############################
+# ArgoCD Helm Deployment
+##############################
 
-#route53 entry
-#helm chart refernece
-
-data "aws_eks_cluster" "main" {
-  name = "ai-demo"
+resource "kubernetes_namespace" "argocd" {
+  metadata {
+    name = "argocd"
+  }
 }
 
-data "aws_eks_cluster_auth" "main" {
-  name = data.aws_eks_cluster.main.name
-}
-
-resource "helm_release" "portfolio" {
-  name       = "portfolio"
-  namespace  = "portfolio"
-  repository = "https://raw.githubusercontent.com/turtlelovesshoes/waffle-scaling-ai-infra/main/k8s/portfolio-helm"
-  chart      = "portfolio"
-  version    = "0.1.0"
+resource "helm_release" "argocd" {
+  name             = "argocd"
+  namespace        = kubernetes_namespace.argocd.metadata[0].name
+  repository       = "https://argoproj.github.io/argo-helm"
+  chart            = "argo-cd"
+  version          = "5.59.0"
+  create_namespace = false
 
   values = [
     yamlencode({
-      image = {
-        repository = "391767403730.dkr.ecr.us-west-2.amazonaws.com/portfolio"
-        tag        = "rachelm-deploysite-48544db4eefbf6df03bd831743a041c318cb59fd"
+      server = {
+        ingress = {
+          enabled = true
+          hosts   = ["argocd.designcodemonkey.com"]
+        }
+      }
+      dex = {
+        connectors = [
+          {
+            type   = "github"
+            id     = "github"
+            name   = "GitHub"
+            config = {
+              clientID     = "Iv23li8fHaEMkjZoeqY"
+              clientSecret = "70a4b7f1adf29d7065376030455edbdd5cf573c8"
+              orgs = [
+                {
+                  name = "turtlelovesshoes" # repo owner; using username since no org
+                }
+              ]
+            }
+          }
+        ]
+      }
+      rbac = {
+        policyCSV = "g, turtlelovesshoes, role:admin"
+      }
+      repoServer = {
+        defaultRepos = [
+          {
+            url    = "https://github.com/turtlelovesshoes/waffle-scaling-ai-infra.git"
+            path   = "k8s/"
+            branch = "main"
+          }
+        ]
       }
     })
   ]
+
+  wait            = true
+  cleanup_on_fail = true
 }
