@@ -227,27 +227,44 @@ provider "aws" {
 
 resource "aws_ecr_repository" "portfolio" {
   name = "portfolio"
-}
-
-output "ecr_repo_uri" {
-  value = aws_ecr_repository.portfolio.repository_url
-}
-resource "null_resource" "docker_login" {
-  provisioner "local-exec" {
-    command = <<EOT
-      aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${aws_ecr_repository.portfolio.repository_url}
-    EOT
+  image_scanning_configuration {
+    scan_on_push = true
   }
 }
-resource "null_resource" "docker_build_push" {
-  depends_on = [null_resource.docker_login]
 
-  provisioner "local-exec" {
-    command = <<EOT
-      docker build -t ${aws_ecr_repository.portfolio.repository_url}:latest https://github.com/turtlelovesshoes/waffle-scaling-ai-infra.git//k8s/portfolio
-      docker push ${aws_ecr_repository.portfolio.repository_url}:latest
-    EOT
-  }
-}
+
 #route53 entry
 #helm chart refernece
+provider "helm" {
+  kubernetes {
+    host                   = aws_eks_cluster.main.endpoint
+    cluster_ca_certificate = base64decode(aws_eks_cluster.main.certificate_authority[0].data)
+    token                  = data.aws_eks_cluster_auth.main.token
+  }
+}
+
+data "aws_eks_cluster" "main" {
+  name = "ai-demo"
+}
+
+data "aws_eks_cluster_auth" "main" {
+  name = data.aws_eks_cluster.main.name
+}
+
+resource "helm_release" "portfolio" {
+  name       = "portfolio"
+  namespace  = "portfolio"
+  repository = "https://raw.githubusercontent.com/turtlelovesshoes/waffle-scaling-ai-infra/main/k8s/portfolio-hlem"
+  chart      = "portfolio"
+  version    = "0.1.0"
+
+  set {
+    name  = "image.repository"
+    value = "391767403730.dkr.ecr.us-west-2.amazonaws.com/portfolio"
+  }
+
+  set {
+    name  = "image.tag"
+    value = "rachelm-deploysite-48544db4eefbf6df03bd831743a041c318cb59fd" # <- this comes from CI/CD (Spacelift sets it)
+  }
+}
