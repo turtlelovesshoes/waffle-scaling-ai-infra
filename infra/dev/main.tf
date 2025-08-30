@@ -212,10 +212,12 @@ resource "aws_route53_zone_association" "assoc" {
   vpc_id  = data.aws_vpc.eks_vpc.id
 }
 # Associate the private zone
+
 resource "aws_route53_zone_association" "eks_private_zone" {
   zone_id = data.aws_route53_zone.private_zone.id
-  vpc_id  = module.eks.vpc_id
+  vpc_id  = data.aws_vpc.eks_vpc.id
 }
+
 ## we need to deploy our  application called portfolio
 
 #Ecr build repository
@@ -231,8 +233,8 @@ resource "aws_ecr_repository" "portfolio" {
 #helm chart refernece
 provider "helm" {
   kubernetes {
-    host                   = aws_eks_cluster.main.endpoint
-    cluster_ca_certificate = base64decode(aws_eks_cluster.main.certificate_authority[0].data)
+    host                   = data.aws_eks_cluster.main.endpoint
+    cluster_ca_certificate = base64decode(data.aws_eks_cluster.main.certificate_authority[0].data)
     token                  = data.aws_eks_cluster_auth.main.token
   }
 }
