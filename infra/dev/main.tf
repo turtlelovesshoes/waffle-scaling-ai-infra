@@ -229,170 +229,94 @@ resource "aws_ecr_repository" "portfolio" {
 }
 
 
-#route53 entry
-#helm chart refernece
-##############################
-# S3 Bucket for Helm Charts
-##############################
-
-resource "aws_s3_bucket" "helm_charts" {
-  bucket = "ai-portfolio-helm-charts"
-
-  force_destroy = true
-
-  tags = merge(
-    {
-      Environment = "dev"
-      ManagedBy   = "Terraform"
-      Service     = "portfolio"
-    },
-    var.default_tags
-  )
-}
-
-# Separate resource for bucket ACL
-resource "aws_s3_bucket_acl" "helm_charts_acl" {
-  bucket = aws_s3_bucket.helm_charts.id
-  acl    = "private"
-}
-
-# Separate resource for server-side encryption
-resource "aws_s3_bucket_server_side_encryption_configuration" "helm_charts_sse" {
-  bucket = aws_s3_bucket.helm_charts.id
-
-  rule {
-    apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
-    }
-  }
-}
-
-# Separate resource for versioning
-resource "aws_s3_bucket_versioning" "helm_charts_versioning" {
-  bucket = aws_s3_bucket.helm_charts.id
-  versioning_configuration {
-    status = "Enabled"
-  }
-}
-
-# Lifecycle rules to optimize cost
-resource "aws_s3_bucket_lifecycle_configuration" "helm_charts_lifecycle" {
-  bucket = aws_s3_bucket.helm_charts.id
-
-  rule {
-    id     = "AbortIncompleteMultipartUpload"
-    status = "Enabled"
-    abort_incomplete_multipart_upload {
-      days_after_initiation = 7
-    }
-  }
-
-  rule {
-    id     = "ExpireNonCurrentVersions"
-    status = "Enabled"
-    noncurrent_version_expiration {
-      noncurrent_days = 30
-    }
-  }
-
-  rule {
-    id     = "TransitionToIntelligentTiering"
-    status = "Enabled"
-    transition {
-      days          = 30
-      storage_class = "INTELLIGENT_TIERING"
-    }
-  }
-}
-
-# HTTPS-only bucket policy
-resource "aws_s3_bucket_policy" "helm_charts_https" {
-  bucket = aws_s3_bucket.helm_charts.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid       = "AllowSSLRequestsOnly"
-        Effect    = "Deny"
-        Principal = "*"
-        Action    = "s3:*"
-        Resource  = [
-          "${aws_s3_bucket.helm_charts.arn}/*",
-          "${aws_s3_bucket.helm_charts.arn}"
-        ]
-        Condition = {
-          Bool = {
-            "aws:SecureTransport" = false
-          }
-        }
-      }
-    ]
-  })
-}
-
-##############################
-# Variables
-##############################
-
-variable "portfolio_image_tag" {
-  type        = string
-  description = "Docker image tag for portfolio"
-  default     = "rachelm-deploysite-48544db4eefbf6df03bd831743a041c318cb59fd"
-}
-
-variable "portfolio_chart_version" {
-  type        = string
-  description = "Helm chart version for portfolio"
-  default     = "0.1.0"
-}
-
-variable "default_tags" {
-  type = map(string)
-  default = {
-    Service     = "portfolio"
-    Environment = "dev"
-  }
-}
-
-##############################
-# Get Helm Chart from S3
-##############################
-
-data "aws_s3_object" "portfolio_chart" {
-  bucket = aws_s3_bucket.helm_charts.id
-  key    = "portfolio-${var.portfolio_chart_version}.tgz"
-}
-
-# Compute a hash to detect changes and force redeploy
-locals {
-  portfolio_chart_hash = md5(data.aws_s3_object.portfolio_chart.body)
-}
-
-##############################
-# Helm Release
-##############################
-
-resource "helm_release" "portfolio" {
-  name       = "portfolio"
-  namespace  = "portfolio"
-  chart      = data.aws_s3_object.portfolio_chart.id
-  repository = "" # empty because chart is from S3
-  version    = var.portfolio_chart_version
+## no buckets just argocd: 
+resource "helm_release" "argocd" {
+  name       = "argocd"
+  namespace  = kubernetes_namespace.argocd.metadata[0].name
+  repository = "https://argoproj.github.io/argo-helm"
+  chart      = "argo-cd"
+  version    = "5.45.0"
 
   values = [
     yamlencode({
-      image = {
-        repository = "391767403730.dkr.ecr.us-west-2.amazonaws.com/portfolio"
-        tag        = var.portfolio_image_tag
+      server = {
+        service = {
+          type = "LoadBalancer"
+        }
+        config = {
+          url = "https://argocd.designcodemonkey.com"
+          admin.enabled = true
+        }
       }
-    }),
-    yamlencode({
-      # Forces Helm redeploy if chart changes
-      chartHash = local.portfolio_chart_hash
+      dex = {
+        enabled = true
+        config = {
+          connectors = [
+            {
+              type = "google"
+              id = "google"
+              name = "Google"
+              config = {
+                clientID     = var.google_oauth_client_id
+                clientSecret = var.google_oauth_client_secret
+                hostedDomains = ["gmail.com"]
+              }
+            }
+          ]
+          staticPasswords = []
+        }
+      }
+      rbac = {
+        policy = "g, saturnsmoon64@gmail.com, role:admin"
+      }
+      repoServer = {
+        resources = {}
+      }
+      application = {
+        defaultProject = "default"
+        apps = [
+          {
+            name      = "waffle-scaling-ai-infra"
+            namespace = "default"
+            project   = "default"
+            source = {
+              repoURL = "https://github.com/turtlelovesshoes/waffle-scaling-ai-infra.git"
+              path    = "k8s"
+              targetRevision = "HEAD"
+            }
+            destination = {
+              server    = "https://kubernetes.default.svc"
+              namespace = "default"
+            }
+            syncPolicy = {
+              automated = {
+                prune = true
+                selfHeal = true
+              }
+              retry = {
+                limit = 5
+              }
+            }
+          }
+        ]
+      }
     })
   ]
 
   wait            = true
   cleanup_on_fail = true
+}
+
+resource "helm_release" "prometheus" {
+  name       = "my-prometheus"
+  repository = "https://prometheus-community.github.io/helm-charts"
+  chart      = "prometheus"
+  version    = "15.0.0"
+}
+
+resource "helm_release" "redis" {
+  name       = "my-redis"
+  repository = "https://charts.bitnami.com/bitnami"
+  chart      = "redis"
+  version    = "15.0.10"
 }
