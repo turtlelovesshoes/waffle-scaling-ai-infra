@@ -231,7 +231,7 @@ resource "aws_ecr_repository" "portfolio" {
 
 #route53 entry
 #helm chart refernece
-##############################
+#############################
 # S3 Bucket for Helm Charts
 ##############################
 
@@ -240,10 +240,6 @@ resource "aws_s3_bucket" "helm_charts" {
   acl    = "private"
 
   force_destroy = true
-
-  versioning {
-    enabled = true
-  }
 
   tags = merge(
     {
@@ -255,7 +251,7 @@ resource "aws_s3_bucket" "helm_charts" {
   )
 }
 
-# Server-side encryption using the recommended resource
+# Enable server-side encryption
 resource "aws_s3_bucket_server_side_encryption_configuration" "helm_charts" {
   bucket = aws_s3_bucket.helm_charts.id
 
@@ -263,6 +259,14 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "helm_charts" {
     apply_server_side_encryption_by_default {
       sse_algorithm = "AES256"
     }
+  }
+}
+
+# Enable versioning
+resource "aws_s3_bucket_versioning" "helm_charts" {
+  bucket = aws_s3_bucket.helm_charts.id
+  versioning_configuration {
+    status = "Enabled"
   }
 }
 
@@ -274,6 +278,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "helm_charts_lifecycle" {
   rule {
     id     = "AbortIncompleteMultipartUpload"
     status = "Enabled"
+    filter {} # required
     abort_incomplete_multipart_upload {
       days_after_initiation = 7
     }
@@ -283,6 +288,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "helm_charts_lifecycle" {
   rule {
     id     = "ExpireNonCurrentVersions"
     status = "Enabled"
+    filter {}
     noncurrent_version_expiration {
       noncurrent_days = 30
     }
@@ -292,9 +298,10 @@ resource "aws_s3_bucket_lifecycle_configuration" "helm_charts_lifecycle" {
   rule {
     id     = "TransitionToIntelligentTiering"
     status = "Enabled"
-    noncurrent_version_transition {
-      noncurrent_days = 30
-      storage_class   = "INTELLIGENT_TIERING"
+    filter {}
+    transition {
+      days          = 30
+      storage_class = "INTELLIGENT_TIERING"
     }
   }
 }
@@ -350,7 +357,7 @@ variable "default_tags" {
 }
 
 ##############################
-# Get Helm Chart from S3
+# Download Helm Chart from S3 locally
 ##############################
 
 data "aws_s3_object" "portfolio_chart" {
@@ -358,9 +365,14 @@ data "aws_s3_object" "portfolio_chart" {
   key    = "portfolio-${var.portfolio_chart_version}.tgz"
 }
 
-# Compute a hash to detect changes and force redeploy
+resource "local_file" "portfolio_chart" {
+  filename = "${path.module}/portfolio-${var.portfolio_chart_version}.tgz"
+  content  = data.aws_s3_object.portfolio_chart.body
+}
+
+# Compute a hash to detect changes
 locals {
-  portfolio_chart_hash = md5(data.aws_s3_object.portfolio_chart.body)
+  portfolio_chart_hash = md5(file(local_file.portfolio_chart.filename))
 }
 
 ##############################
@@ -370,8 +382,8 @@ locals {
 resource "helm_release" "portfolio" {
   name       = "portfolio"
   namespace  = "portfolio"
-  chart      = data.aws_s3_object.portfolio_chart.id
-  repository = "" # empty because chart is from S3
+  chart      = local_file.portfolio_chart.filename
+  repository = "" # empty because chart is from local file
   version    = var.portfolio_chart_version
 
   values = [
