@@ -229,68 +229,62 @@ resource "aws_ecr_repository" "portfolio" {
 }
 
 ##############################
-# ArgoCD Helm Release
+# ArgoCD Helm Deployment
 ##############################
+
+resource "kubernetes_namespace" "argocd" {
+  metadata {
+    name = "argocd"
+  }
+}
+
 resource "helm_release" "argocd" {
   name       = "argocd"
-  namespace  = "argocd"
+  namespace  = kubernetes_namespace.argocd.metadata[0].name
   repository = "https://argoproj.github.io/argo-helm"
   chart      = "argo-cd"
-  version    = "5.45.0"
+  version    = "5.58.0" # adjust as needed
+  create_namespace = false
 
   values = [
     yamlencode({
       server = {
-        service = {
-          type = "LoadBalancer"
-        }
-        # admin.enabled is part of the chart values, not a Terraform resource
-        admin = {
+        ingress = {
           enabled = true
-        }
-        config = {
-          url = "https://argocd.designcodemonkey.com"
+          hosts   = ["argocd.designcodemonkey.com"]
         }
       }
       dex = {
-        enabled = true
-        config = {
-          connectors = [
-            {
-              type = "google"
-              id   = "google"
-              name = "Google"
-              config = {
-                clientID     = var.google_oauth_client_id
-                clientSecret = var.google_oauth_client_secret
-                hostedDomains = ["gmail.com"]
-              }
+        connectors = [
+          {
+            type = "github"
+            id   = "github"
+            name = "GitHub"
+            config = {
+              clientID     = "Iv23li8fHaEMkjZoeqY"
+              clientSecret = "70a4b7f1adf29d7065376030455edbdd5cf573c8"
+              orgs = [
+                { name = "turtlelovesshoes" } # repo owner; since no org, use username
+              ]
             }
-          ]
-          staticPasswords = []
-        }
+          }
+        ]
       }
       rbac = {
-        policy = "g, saturnsmoon64@gmail.com, role:admin"
+        policyCSV = "g, turtlelovesshoes, role:admin"
+      }
+      repoServer = {
+        defaultRepos = [
+          {
+            url      = "https://github.com/turtlelovesshoes/waffle-scaling-ai-infra.git"
+            path     = "k8s/"
+            branch   = "main"
+          }
+        ]
       }
     })
   ]
-
+  
   wait            = true
   cleanup_on_fail = true
-}
-
-
-resource "helm_release" "prometheus" {
-  name       = "my-prometheus"
-  repository = "https://prometheus-community.github.io/helm-charts"
-  chart      = "prometheus"
-  version    = "15.0.0"
-}
-
-resource "helm_release" "redis" {
-  name       = "my-redis"
-  repository = "https://charts.bitnami.com/bitnami"
-  chart      = "redis"
-  version    = "15.0.10"
 }
