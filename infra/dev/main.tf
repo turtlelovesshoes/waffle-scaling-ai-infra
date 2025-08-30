@@ -247,13 +247,12 @@ resource "helm_release" "portfolio" {
   chart      = "portfolio"
   version    = "0.1.0"
 
-  set {
-    name  = "image.repository"
-    value = "391767403730.dkr.ecr.us-west-2.amazonaws.com/portfolio"
-  }
-
-  set {
-    name  = "image.tag"
-    value = "rachelm-deploysite-48544db4eefbf6df03bd831743a041c318cb59fd" # <- this comes from CI/CD (Spacelift sets it)
-  }
+  values = [
+    yamlencode({
+      image = {
+        repository = "391767403730.dkr.ecr.us-west-2.amazonaws.com/portfolio"
+        tag        = "rachelm-deploysite-48544db4eefbf6df03bd831743a041c318cb59fd"
+      }
+    })
+  ]
 }
