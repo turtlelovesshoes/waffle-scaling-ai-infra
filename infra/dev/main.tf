@@ -209,11 +209,6 @@ data "aws_route53_zone" "private_zone" {
   private_zone = true
 }
 
-# Associate the VPC with the private zone
-resource "aws_route53_zone_association" "private_zone_assoc" {
-  zone_id = data.aws_route53_zone.private_zone.id
-  vpc_id  = data.aws_vpc.eks_vpc.id
-}
 
 ## Deploy application called portfolio
 data "aws_eks_cluster_auth" "example" {
