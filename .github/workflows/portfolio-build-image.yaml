@@ -29,9 +29,9 @@ jobs:
 
       - name: Build and push portfolio image
         run: |
-          IMAGE_TAG=${GITHUB_REF_NAME}-${GITHUB_SHA}
-          docker build -t 391767403730.dkr.ecr.us-east-1.amazonaws.com/portfolio:$IMAGE_TAG ./k8s/portfolio
-          docker push 391767403730.dkr.ecr.us-east-1.amazonaws.com/portfolio:$IMAGE_TAG
+         IMAGE_TAG=${GITHUB_REF_NAME}-${GITHUB_SHA}
+         docker build -t 391767403730.dkr.ecr.us-west-2.amazonaws.com/portfolio:$IMAGE_TAG ./k8s/portfolio
+         docker push 391767403730.dkr.ecr.us-west-2.amazonaws.com/portfolio:$IMAGE_TAG
 
       - name: Pass image tag to Spacelift (or Terraform variable)
         run: echo "IMAGE_TAG=${GITHUB_REF_NAME}-${GITHUB_SHA}" >> $GITHUB_ENV
