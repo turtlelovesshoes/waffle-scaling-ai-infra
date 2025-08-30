@@ -200,7 +200,7 @@ output "cluster_certificate_authority_data" {
 ### route53 ###
 # Fetch your existing VPC
 data "aws_vpc" "eks_vpc" {
-  id = module.vpc.vpc_id  # Replace with your cluster VPC
+  id = module.vpc.vpc_id  
 }
 
 # Fetch the hosted zone (private)
@@ -209,23 +209,13 @@ data "aws_route53_zone" "private_zone" {
   private_zone = true
 }
 
-resource "aws_route53_vpc_association_authorization" "auth" {
-  vpc_id        = data.aws_vpc.eks_vpc.id
-  zone_id       = data.aws_route53_zone.private_zone.id
-}
-
-resource "aws_route53_zone_association" "assoc" {
-  zone_id = data.aws_route53_zone.private_zone.id
-  vpc_id  = data.aws_vpc.eks_vpc.id
-}
-# Associate the private zone
-
-resource "aws_route53_zone_association" "eks_private_zone" {
+# Associate the VPC with the private zone
+resource "aws_route53_zone_association" "private_zone_assoc" {
   zone_id = data.aws_route53_zone.private_zone.id
   vpc_id  = data.aws_vpc.eks_vpc.id
 }
 
-## we need to deploy our  application called portfolio
+## Deploy application called portfolio
 data "aws_eks_cluster_auth" "example" {
   name = module.eks.cluster_name
 }
