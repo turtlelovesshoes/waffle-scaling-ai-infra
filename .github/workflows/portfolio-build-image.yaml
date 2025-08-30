@@ -22,7 +22,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::39176740370:role/portfolio-ci-role
-          aws-region: us-east-1
+          aws-region: us-west-2
 
       - name: Login to Amazon ECR
         run: aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 39176740370.dkr.ecr.us-east-1.amazonaws.com
