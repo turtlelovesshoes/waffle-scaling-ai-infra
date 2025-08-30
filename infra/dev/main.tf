@@ -4,6 +4,7 @@ terraform {
     aws = {
       source  = "hashicorp/aws"
       version = "~> 5.0"
+      region = "us-west-2"
     }
     random = {
       source  = "hashicorp/random"
@@ -31,9 +32,7 @@ output "demo_message" {
   value = local_file.demo.content
 }
 #### EKS CLUSTER ###
-provider "aws" {
-  region = "us-west-2"
-}
+
 
 # EKS cluster IAM role
 resource "aws_iam_role" "eks_cluster_role" {
@@ -221,10 +220,6 @@ resource "aws_route53_zone_association" "eks_private_zone" {
 ## we need to deploy our  application called portfolio
 
 #Ecr build repository
-provider "aws" {
-  region = "us-east-1"
-}
-
 resource "aws_ecr_repository" "portfolio" {
   name = "portfolio"
   image_scanning_configuration {
