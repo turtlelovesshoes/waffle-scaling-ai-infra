@@ -281,7 +281,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "helm_charts_lifecycle" {
     id     = "ExpireNonCurrentVersions"
     status = "Enabled"
     noncurrent_version_expiration {
-      days = 30
+      days = 7
     }
   }
 
@@ -290,7 +290,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "helm_charts_lifecycle" {
     id     = "TransitionToIntelligentTiering"
     status = "Enabled"
     transition {
-      days          = 30
+      days          = 7
       storage_class = "INTELLIGENT_TIERING"
     }
   }
@@ -329,6 +329,7 @@ resource "aws_s3_bucket_policy" "helm_charts_https" {
 variable "portfolio_image_tag" {
   type        = string
   description = "Docker image tag for portfolio"
+  default = "rachelm-deploysite-48544db4eefbf6df03bd831743a041c318cb59fd"
 }
 
 variable "portfolio_chart_version" {
