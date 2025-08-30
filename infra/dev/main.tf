@@ -231,14 +231,15 @@ resource "aws_ecr_repository" "portfolio" {
 
 #route53 entry
 #helm chart refernece
+##############################
+# S3 Bucket for Helm Charts
+##############################
 
-# we nee a place to save our helm chart builds; 
-# S3 Bucket for Helm charts
 resource "aws_s3_bucket" "helm_charts" {
   bucket = "ai-portfolio-helm-charts"
   acl    = "private"
 
-  force_destroy = true # optional: deletes contents if bucket is destroyed
+  force_destroy = true
 
   server_side_encryption_configuration {
     rule {
@@ -252,13 +253,46 @@ resource "aws_s3_bucket" "helm_charts" {
     enabled = true
   }
 
-  tags = {
-    Environment = "dev"
-    ManagedBy   = "Terraform"
+  tags = merge(
+    {
+      Environment = "dev"
+      ManagedBy   = "Terraform"
+    },
+    var.default_tags
+  )
+}
+
+# Lifecycle rules to optimize cost
+resource "aws_s3_bucket_lifecycle_configuration" "helm_charts_lifecycle" {
+  bucket = aws_s3_bucket.helm_charts.id
+
+  rule {
+    id     = "AbortIncompleteMultipartUpload"
+    status = "Enabled"
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
+  }
+
+  rule {
+    id     = "ExpireNonCurrentVersions"
+    status = "Enabled"
+    noncurrent_version_expiration {
+      days = 30
+    }
+  }
+
+  rule {
+    id     = "TransitionToIntelligentTiering"
+    status = "Enabled"
+    transition {
+      days          = 30
+      storage_class = "INTELLIGENT_TIERING"
+    }
   }
 }
 
-# Enable HTTPS only by enforcing bucket policy
+# HTTPS-only bucket policy
 resource "aws_s3_bucket_policy" "helm_charts_https" {
   bucket = aws_s3_bucket.helm_charts.id
 
@@ -284,15 +318,6 @@ resource "aws_s3_bucket_policy" "helm_charts_https" {
   })
 }
 
-
-data "aws_eks_cluster" "main" {
-  name = "ai-demo"
-}
-
-data "aws_eks_cluster_auth" "main" {
-  name = data.aws_eks_cluster.main.name
-}
-
 ##############################
 # Variables
 ##############################
@@ -308,6 +333,14 @@ variable "portfolio_chart_version" {
   default     = "0.1.0"
 }
 
+variable "default_tags" {
+  type = map(string)
+  default = {
+    Service     = "portfolio"
+    Environment = "dev"
+  }
+}
+
 ##############################
 # Get Helm Chart from S3
 ##############################
@@ -317,7 +350,7 @@ data "aws_s3_object" "portfolio_chart" {
   key    = "portfolio-${var.portfolio_chart_version}.tgz"
 }
 
-# Compute a hash to detect changes
+# Compute a hash to detect changes and force redeploy
 locals {
   portfolio_chart_hash = md5(data.aws_s3_object.portfolio_chart.body)
 }
@@ -329,8 +362,8 @@ locals {
 resource "helm_release" "portfolio" {
   name       = "portfolio"
   namespace  = "portfolio"
-  chart      = data.aws_s3_bucket_object.portfolio_chart.id
-  repository = ""  # empty because using S3 chart archive
+  chart      = data.aws_s3_object.portfolio_chart.id
+  repository = "" # empty because chart is from S3
   version    = var.portfolio_chart_version
 
   values = [
@@ -341,12 +374,11 @@ resource "helm_release" "portfolio" {
       }
     }),
     yamlencode({
-      # Add a dummy value with the chart hash to force redeploy on chart changes
+      # Forces Helm redeploy if chart changes
       chartHash = local.portfolio_chart_hash
     })
   ]
 
-  # Optional: Ensure Helm waits for all resources to be ready
-  wait        = true
+  wait            = true
   cleanup_on_fail = true
 }
