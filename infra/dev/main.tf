@@ -229,7 +229,7 @@ resource "aws_route53_zone_association" "eks_private_zone" {
 data "aws_eks_cluster_auth" "example" {
   name = module.eks.cluster_id
 }
-##############################
+###############################
 # Kubernetes Provider
 ##############################
 
@@ -244,23 +244,10 @@ provider "kubernetes" {
 ##############################
 
 provider "helm" {
-  kubernetes {
+  kubernetes = {
     host                   = module.eks.cluster_endpoint
     cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
-    exec{
-      api_version = "client.authentication.k8s.io/v1beta1"
-      args        = ["eks", "get-token", "--cluster-name", module.eks.cluster.name]
-      command     = "aws"
-    }
-  }
-}
-
-
-#Ecr build repository
-resource "aws_ecr_repository" "portfolio" {
-  name = "portfolio"
-  image_scanning_configuration {
-    scan_on_push = true
+    token                  = data.aws_eks_cluster_auth.example.token
   }
 }
 
@@ -275,11 +262,11 @@ resource "kubernetes_namespace" "argocd" {
 }
 
 resource "helm_release" "argocd" {
-  name       = "argocd"
-  namespace  = kubernetes_namespace.argocd.metadata[0].name
-  repository = "https://argoproj.github.io/argo-helm"
-  chart      = "argo-cd"
-  version    = "5.59.0" 
+  name             = "argocd"
+  namespace        = kubernetes_namespace.argocd.metadata[0].name
+  repository       = "https://argoproj.github.io/argo-helm"
+  chart            = "argo-cd"
+  version          = "5.59.0"
   create_namespace = false
 
   values = [
@@ -293,14 +280,16 @@ resource "helm_release" "argocd" {
       dex = {
         connectors = [
           {
-            type = "github"
-            id   = "github"
-            name = "GitHub"
+            type   = "github"
+            id     = "github"
+            name   = "GitHub"
             config = {
               clientID     = "Iv23li8fHaEMkjZoeqY"
               clientSecret = "70a4b7f1adf29d7065376030455edbdd5cf573c8"
               orgs = [
-                { name = "turtlelovesshoes" } # repo owner; since no org, use username
+                {
+                  name = "turtlelovesshoes" # repo owner; using username since no org
+                }
               ]
             }
           }
@@ -312,15 +301,15 @@ resource "helm_release" "argocd" {
       repoServer = {
         defaultRepos = [
           {
-            url      = "https://github.com/turtlelovesshoes/waffle-scaling-ai-infra.git"
-            path     = "k8s/"
-            branch   = "main"
+            url    = "https://github.com/turtlelovesshoes/waffle-scaling-ai-infra.git"
+            path   = "k8s/"
+            branch = "main"
           }
         ]
       }
     })
   ]
-  
+
   wait            = true
   cleanup_on_fail = true
 }
