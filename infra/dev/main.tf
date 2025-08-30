@@ -241,14 +241,6 @@ resource "aws_s3_bucket" "helm_charts" {
 
   force_destroy = true
 
-  server_side_encryption_configuration {
-    rule {
-      apply_server_side_encryption_by_default {
-        sse_algorithm = "AES256"
-      }
-    }
-  }
-
   versioning {
     enabled = true
   }
@@ -261,6 +253,17 @@ resource "aws_s3_bucket" "helm_charts" {
     },
     var.default_tags
   )
+}
+
+# Server-side encryption using the recommended resource
+resource "aws_s3_bucket_server_side_encryption_configuration" "helm_charts" {
+  bucket = aws_s3_bucket.helm_charts.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
 }
 
 # Lifecycle rules to optimize cost
@@ -281,7 +284,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "helm_charts_lifecycle" {
     id     = "ExpireNonCurrentVersions"
     status = "Enabled"
     noncurrent_version_expiration {
-      days = 7
+      noncurrent_days = 30
     }
   }
 
@@ -289,9 +292,9 @@ resource "aws_s3_bucket_lifecycle_configuration" "helm_charts_lifecycle" {
   rule {
     id     = "TransitionToIntelligentTiering"
     status = "Enabled"
-    transition {
-      days          = 7
-      storage_class = "INTELLIGENT_TIERING"
+    noncurrent_version_transition {
+      noncurrent_days = 30
+      storage_class   = "INTELLIGENT_TIERING"
     }
   }
 }
@@ -329,7 +332,7 @@ resource "aws_s3_bucket_policy" "helm_charts_https" {
 variable "portfolio_image_tag" {
   type        = string
   description = "Docker image tag for portfolio"
-  default = "rachelm-deploysite-48544db4eefbf6df03bd831743a041c318cb59fd"
+  default     = "rachelm-deploysite-48544db4eefbf6df03bd831743a041c318cb59fd"
 }
 
 variable "portfolio_chart_version" {
