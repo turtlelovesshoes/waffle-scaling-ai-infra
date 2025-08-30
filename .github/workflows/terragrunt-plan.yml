@@ -15,7 +15,8 @@ jobs:
       - name: Setup Terragrunt
         uses: gruntwork-io/terragrunt-action@v3
         with:
-          tg_version: 'v0.58.0' # Specify the version you want
+          tg_version: 'v0.58.0'
+          tf_version: '1.6.6'
 
       - name: Run Terragrunt Plan
         run: |
