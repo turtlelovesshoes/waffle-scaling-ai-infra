@@ -9,3 +9,6 @@ stack_defaults:
     - terragrunt --version
   before_destroy:
     - terragrunt run-all destroy --terragrunt-non-interactive
+
+
+    

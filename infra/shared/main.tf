@@ -203,3 +203,51 @@ data "aws_route53_zone" "private_zone" {
   name         = "designcodemonkey.space"  # Replace with your domain
   private_zone = true
 }
+
+resource "aws_route53_vpc_association_authorization" "auth" {
+  vpc_id        = data.aws_vpc.eks_vpc.id
+  zone_id       = data.aws_route53_zone.private_zone.id
+}
+
+resource "aws_route53_zone_association" "assoc" {
+  zone_id = data.aws_route53_zone.private_zone.id
+  vpc_id  = data.aws_vpc.eks_vpc.id
+}
+# Associate the private zone
+resource "aws_route53_zone_association" "eks_private_zone" {
+  zone_id = data.aws_route53_zone.private_zone.id
+  vpc_id  = module.eks.vpc_id
+}
+## we need to deploy our  application called portfolio
+
+#Ecr build repository
+provider "aws" {
+  region = "us-east-1"
+}
+
+resource "aws_ecr_repository" "portfolio" {
+  name = "portfolio"
+}
+
+output "ecr_repo_uri" {
+  value = aws_ecr_repository.portfolio.repository_url
+}
+resource "null_resource" "docker_login" {
+  provisioner "local-exec" {
+    command = <<EOT
+      aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${aws_ecr_repository.portfolio.repository_url}
+    EOT
+  }
+}
+resource "null_resource" "docker_build_push" {
+  depends_on = [null_resource.docker_login]
+
+  provisioner "local-exec" {
+    command = <<EOT
+      docker build -t ${aws_ecr_repository.portfolio.repository_url}:latest https://github.com/turtlelovesshoes/waffle-scaling-ai-infra.git//k8s/portfolio
+      docker push ${aws_ecr_repository.portfolio.repository_url}:latest
+    EOT
+  }
+}
+#route53 entry
+#helm chart refernece
