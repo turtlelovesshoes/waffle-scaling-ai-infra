@@ -243,7 +243,7 @@ data "aws_eks_cluster_auth" "main" {
 resource "helm_release" "portfolio" {
   name       = "portfolio"
   namespace  = "portfolio"
-  repository = "https://raw.githubusercontent.com/turtlelovesshoes/waffle-scaling-ai-infra/main/k8s/portfolio-hlem"
+  repository = "https://raw.githubusercontent.com/turtlelovesshoes/waffle-scaling-ai-infra/main/k8s/portfolio-helm"
   chart      = "portfolio"
   version    = "0.1.0"
 
