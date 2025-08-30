@@ -266,7 +266,7 @@ resource "helm_release" "argocd" {
   namespace        = kubernetes_namespace.argocd.metadata[0].name
   repository       = "https://argoproj.github.io/argo-helm"
   chart            = "argo-cd"
-  version          = "5.59.0"
+  version          = "8.3.1"
   create_namespace = false
 
   values = [
@@ -274,7 +274,7 @@ resource "helm_release" "argocd" {
       server = {
         ingress = {
           enabled = true
-          hosts   = ["argocd.designcodemonkey.com"]
+          hosts   = ["argocd.designcodemonkey.io"]
         }
       }
       dex = {
