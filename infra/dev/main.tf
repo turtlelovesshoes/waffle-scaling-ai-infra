@@ -232,6 +232,59 @@ resource "aws_ecr_repository" "portfolio" {
 #route53 entry
 #helm chart refernece
 
+# we nee a place to save our helm chart builds; 
+# S3 Bucket for Helm charts
+resource "aws_s3_bucket" "helm_charts" {
+  bucket = "ai-portfolio-helm-charts"
+  acl    = "private"
+
+  force_destroy = true # optional: deletes contents if bucket is destroyed
+
+  server_side_encryption_configuration {
+    rule {
+      apply_server_side_encryption_by_default {
+        sse_algorithm = "AES256"
+      }
+    }
+  }
+
+  versioning {
+    enabled = true
+  }
+
+  tags = {
+    Environment = "dev"
+    ManagedBy   = "Terraform"
+  }
+}
+
+# Enable HTTPS only by enforcing bucket policy
+resource "aws_s3_bucket_policy" "helm_charts_https" {
+  bucket = aws_s3_bucket.helm_charts.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "AllowSSLRequestsOnly"
+        Effect    = "Deny"
+        Principal = "*"
+        Action    = "s3:*"
+        Resource  = [
+          "${aws_s3_bucket.helm_charts.arn}/*",
+          "${aws_s3_bucket.helm_charts.arn}"
+        ]
+        Condition = {
+          Bool = {
+            "aws:SecureTransport" = false
+          }
+        }
+      }
+    ]
+  })
+}
+
+
 data "aws_eks_cluster" "main" {
   name = "ai-demo"
 }
@@ -240,19 +293,60 @@ data "aws_eks_cluster_auth" "main" {
   name = data.aws_eks_cluster.main.name
 }
 
+##############################
+# Variables
+##############################
+
+variable "portfolio_image_tag" {
+  type        = string
+  description = "Docker image tag for portfolio"
+}
+
+variable "portfolio_chart_version" {
+  type        = string
+  description = "Helm chart version for portfolio"
+  default     = "0.1.0"
+}
+
+##############################
+# Get Helm Chart from S3
+##############################
+
+data "aws_s3_object" "portfolio_chart" {
+  bucket = aws_s3_bucket.helm_charts.id
+  key    = "portfolio-${var.portfolio_chart_version}.tgz"
+}
+
+# Compute a hash to detect changes
+locals {
+  portfolio_chart_hash = md5(data.aws_s3_object.portfolio_chart.body)
+}
+
+##############################
+# Helm Release
+##############################
+
 resource "helm_release" "portfolio" {
   name       = "portfolio"
   namespace  = "portfolio"
-  repository = "https://raw.githubusercontent.com/turtlelovesshoes/waffle-scaling-ai-infra/main/k8s/portfolio-helm"
-  chart      = "portfolio"
-  version    = "0.1.0"
+  chart      = data.aws_s3_bucket_object.portfolio_chart.id
+  repository = ""  # empty because using S3 chart archive
+  version    = var.portfolio_chart_version
 
   values = [
     yamlencode({
       image = {
         repository = "391767403730.dkr.ecr.us-west-2.amazonaws.com/portfolio"
-        tag        = "rachelm-deploysite-48544db4eefbf6df03bd831743a041c318cb59fd"
+        tag        = var.portfolio_image_tag
       }
+    }),
+    yamlencode({
+      # Add a dummy value with the chart hash to force redeploy on chart changes
+      chartHash = local.portfolio_chart_hash
     })
   ]
+
+  # Optional: Ensure Helm waits for all resources to be ready
+  wait        = true
+  cleanup_on_fail = true
 }
