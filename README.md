@@ -311,6 +311,8 @@ stack_defaults:
 - GitHub Actions CI: build/test → push images → trigger Spacelift run
 - Observability: CloudWatch dashboards + structured logs; optional Prometheus/Grafana
 - Feature: voice selector in UI; volume/speed controls; SSML support
+- Cost visibility with Infracost (via default infracost tag) [https://github.com/turtlelovesshoes/waffle-scaling-ai-infra/pull/1]
+
 
 ---
 
