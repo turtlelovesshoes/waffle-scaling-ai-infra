@@ -198,8 +198,8 @@ data "aws_vpc" "eks_vpc" {
 
 # Fetch the hosted zone (private)
 data "aws_route53_zone" "private_zone" {
-  name         = "designcodemonkey.space"  # Replace with your domain
-  private_zone = true
+  name         = "designcodemonkey.com" 
+  #private_zone = true
 }
 
 resource "aws_route53_vpc_association_authorization" "auth" {
