@@ -26,7 +26,7 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 1.7.0   # replace with your version
+          terraform_version: 1.5.0 
 
       - name: Install Terragrunt
         run: |
@@ -47,5 +47,5 @@ jobs:
         uses: hashicorp/terraform-github-actions@v1
         with:
           tf_actions_subcommand: cost
-          terraform_version: 1.7.0
+          terraform_version: 1.5.0
           working-directory: ./infra/dev
