@@ -231,13 +231,6 @@ resource "aws_ecr_repository" "portfolio" {
 
 #route53 entry
 #helm chart refernece
-provider "helm" {
-  kubernetes {
-    host                   = data.aws_eks_cluster.main.endpoint
-    cluster_ca_certificate = base64decode(data.aws_eks_cluster.main.certificate_authority[0].data)
-    token                  = data.aws_eks_cluster_auth.main.token
-  }
-}
 
 data "aws_eks_cluster" "main" {
   name = "ai-demo"
