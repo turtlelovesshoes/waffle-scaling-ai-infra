@@ -191,3 +191,81 @@ output "cluster_endpoint" {
 output "cluster_certificate_authority_data" {
   value = module.eks.cluster_certificate_authority_data
 }
+
+
+### route53 ###
+# Fetch your existing VPC
+data "aws_vpc" "eks_vpc" {
+  id = module.vpc.vpc_id  # Replace with your cluster VPC
+}
+
+# Fetch the hosted zone (private)
+data "aws_route53_zone" "private_zone" {
+  name         = "designcodemonkey.space"  # Replace with your domain
+  private_zone = true
+}
+
+resource "aws_route53_vpc_association_authorization" "auth" {
+  vpc_id        = data.aws_vpc.eks_vpc.id
+  zone_id       = data.aws_route53_zone.private_zone.id
+}
+
+resource "aws_route53_zone_association" "assoc" {
+  zone_id = data.aws_route53_zone.private_zone.id
+  vpc_id  = data.aws_vpc.eks_vpc.id
+}
+# Associate the private zone
+resource "aws_route53_zone_association" "eks_private_zone" {
+  zone_id = data.aws_route53_zone.private_zone.id
+  vpc_id  = module.eks.vpc_id
+}
+## we need to deploy our  application called portfolio
+
+#Ecr build repository
+provider "aws" {
+  region = "us-west-2"
+}
+
+resource "aws_ecr_repository" "portfolio" {
+  name = "portfolio"
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+}
+
+
+#route53 entry
+#helm chart refernece
+provider "helm" {
+  kubernetes {
+    host                   = aws_eks_cluster.main.endpoint
+    cluster_ca_certificate = base64decode(aws_eks_cluster.main.certificate_authority[0].data)
+    token                  = data.aws_eks_cluster_auth.main.token
+  }
+}
+
+data "aws_eks_cluster" "main" {
+  name = "ai-demo"
+}
+
+data "aws_eks_cluster_auth" "main" {
+  name = data.aws_eks_cluster.main.name
+}
+
+resource "helm_release" "portfolio" {
+  name       = "portfolio"
+  namespace  = "portfolio"
+  repository = "https://raw.githubusercontent.com/turtlelovesshoes/waffle-scaling-ai-infra/main/k8s/portfolio-hlem"
+  chart      = "portfolio"
+  version    = "0.1.0"
+
+  set {
+    name  = "image.repository"
+    value = "391767403730.dkr.ecr.us-west-2.amazonaws.com/portfolio"
+  }
+
+  set {
+    name  = "image.tag"
+    value = "rachelm-deploysite-48544db4eefbf6df03bd831743a041c318cb59fd" # <- this comes from CI/CD (Spacelift sets it)
+  }
+}
