@@ -219,6 +219,27 @@ resource "aws_route53_zone_association" "eks_private_zone" {
 }
 
 ## we need to deploy our  application called portfolio
+##############################
+# Kubernetes Provider
+##############################
+
+provider "kubernetes" {
+  host                   = module.eks.cluster_endpoint
+  cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
+  token                  = data.aws_eks_cluster_auth.example.token
+}
+
+##############################
+# Helm Provider
+##############################
+
+provider "helm" {
+  kubernetes {
+    host                   = module.eks.cluster_endpoint
+    cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
+    token                  = data.aws_eks_cluster_auth.example.token  }
+}
+
 
 #Ecr build repository
 resource "aws_ecr_repository" "portfolio" {
