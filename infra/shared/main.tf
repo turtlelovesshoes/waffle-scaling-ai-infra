@@ -222,7 +222,7 @@ resource "aws_route53_zone_association" "eks_private_zone" {
 
 #Ecr build repository
 provider "aws" {
-  region = "us-east-1"
+  region = "us-west-2"
 }
 
 resource "aws_ecr_repository" "portfolio" {
