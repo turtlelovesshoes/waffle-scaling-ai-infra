@@ -228,8 +228,9 @@ resource "aws_ecr_repository" "portfolio" {
   }
 }
 
-
-## no buckets just argocd: 
+##############################
+# ArgoCD Helm Release
+##############################
 resource "helm_release" "argocd" {
   name       = "argocd"
   namespace  = kubernetes_namespace.argocd.metadata[0].name
@@ -243,9 +244,12 @@ resource "helm_release" "argocd" {
         service = {
           type = "LoadBalancer"
         }
+        # admin.enabled is part of the chart values, not a Terraform resource
+        admin = {
+          enabled = true
+        }
         config = {
           url = "https://argocd.designcodemonkey.com"
-          admin.enabled = true
         }
       }
       dex = {
@@ -254,7 +258,7 @@ resource "helm_release" "argocd" {
           connectors = [
             {
               type = "google"
-              id = "google"
+              id   = "google"
               name = "Google"
               config = {
                 clientID     = var.google_oauth_client_id
@@ -269,43 +273,13 @@ resource "helm_release" "argocd" {
       rbac = {
         policy = "g, saturnsmoon64@gmail.com, role:admin"
       }
-      repoServer = {
-        resources = {}
-      }
-      application = {
-        defaultProject = "default"
-        apps = [
-          {
-            name      = "waffle-scaling-ai-infra"
-            namespace = "default"
-            project   = "default"
-            source = {
-              repoURL = "https://github.com/turtlelovesshoes/waffle-scaling-ai-infra.git"
-              path    = "k8s"
-              targetRevision = "HEAD"
-            }
-            destination = {
-              server    = "https://kubernetes.default.svc"
-              namespace = "default"
-            }
-            syncPolicy = {
-              automated = {
-                prune = true
-                selfHeal = true
-              }
-              retry = {
-                limit = 5
-              }
-            }
-          }
-        ]
-      }
     })
   ]
 
   wait            = true
   cleanup_on_fail = true
 }
+
 
 resource "helm_release" "prometheus" {
   name       = "my-prometheus"
