@@ -152,16 +152,19 @@ module "eks" {
   }
 
   eks_managed_node_groups = {
-    dev_nodes = {
-      min_size     = 1
-      max_size     = 3
-      desired_size = 2
-      instance_types = ["t3.large"]
-      capacity_type  = "SPOT"
-      iam_role_arn   = aws_iam_role.eks_node_role.arn
-      tags = { Environment = "dev" }
+  dev_nodes = {
+    min_size       = 1
+    max_size       = 3
+    desired_size   = 2
+    instance_types = ["t3.large"]
+    capacity_type  = "SPOT"
+    iam_role_arn   = aws_iam_role.eks_node_role.arn
+
+    tags = {
+      Environment = "dev"
     }
   }
+}
 }
 
 output "cluster_name" {
