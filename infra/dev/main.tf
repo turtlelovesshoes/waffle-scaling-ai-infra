@@ -148,6 +148,16 @@ module "eks" {
         }
       }
     }
+   node_security_group_additional_rules = {
+
+    node_to_node_ig = {
+      description = "Node to node ingress traffic"
+      from_port   = 1
+      to_port     = 65535
+      protocol    = "all"
+      type        = "ingress"
+      self        = true
+    }
   }
 
   cluster_addons = {
