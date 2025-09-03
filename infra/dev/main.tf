@@ -160,6 +160,9 @@ module "eks" {
     vpc-cni = {
       most_recent = true
     }
+    metrics-server = {
+      most_recent              = true
+    }
   }
     # EKS Managed Node Group(s)
   eks_managed_node_group_defaults = {
