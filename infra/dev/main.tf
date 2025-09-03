@@ -192,7 +192,7 @@ provider "kubernetes" {
   host                   = module.eks.cluster_endpoint
   cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
   token                  = data.aws_eks_cluster_auth.eks.token
-  depends_on = [module.eks]
+
 }
 
 provider "helm" {
@@ -200,7 +200,7 @@ provider "helm" {
     host                   = module.eks.cluster_endpoint
     cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
     token                  = data.aws_eks_cluster_auth.eks.token
-    depends_on = [module.eks]
+    
   }
 }
 
@@ -210,6 +210,7 @@ provider "helm" {
 
 resource "kubernetes_namespace" "argocd" {
   metadata { name = "argocd" }
+  depends_on = [module.eks]
 }
 
 resource "helm_release" "argocd" {
@@ -265,4 +266,5 @@ resource "helm_release" "argocd" {
 
   wait            = true
   cleanup_on_fail = true
+  depends_on = [module.eks]
 }
