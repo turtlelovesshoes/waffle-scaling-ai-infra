@@ -258,31 +258,48 @@ resource "helm_release" "argocd" {
     yamlencode({
       server = {
         ingress = {
-          enabled = true
-          hosts   = ["argocd.designcodemonkey.io"]
+          enabled          = true
+          ingressClassName = "alb"
+          hosts            = ["argocd.designcodemonkey.space"]
+          paths            = ["/"]
+          pathType         = "Prefix"
+          https = {
+            enabled     = true
+            servicePort = 443
+          }
+          annotations = {
+            "alb.ingress.kubernetes.io/scheme"          = "internet-facing"
+            "alb.ingress.kubernetes.io/listen-ports"    = "[{\"HTTPS\":443}]"
+            "alb.ingress.kubernetes.io/certificate-arn" = "arn:aws:acm:us-west-2:391767403730:certificate/your-cert-arn"
+            "alb.ingress.kubernetes.io/ssl-redirect"    = "443"
+            "alb.ingress.kubernetes.io/target-type"     = "ip"
+            "alb.ingress.kubernetes.io/group.name"      = "argocd-alb-target-group"
+            "kubernetes.io/ingress.class"               = "alb"
+          }
         }
       }
+
       dex = {
         connectors = [
           {
-            type   = "github"
-            id     = "github"
-            name   = "GitHub"
+            type = "github"
+            id   = "github"
+            name = "GitHub"
             config = {
               clientID     = "Iv23li8fHaEMkjZoeqY"
               clientSecret = "70a4b7f1adf29d7065376030455edbdd5cf573c8"
               orgs = [
-                {
-                  name = "turtlelovesshoes" # repo owner; using username since no org
-                }
+                { name = "turtlelovesshoes" }
               ]
             }
           }
         ]
       }
+
       rbac = {
         policyCSV = "g, turtlelovesshoes, role:admin"
       }
+
       repoServer = {
         defaultRepos = [
           {
