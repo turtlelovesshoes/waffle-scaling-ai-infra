@@ -7,11 +7,11 @@ terraform {
     }
     kubernetes = {
       source  = "hashicorp/kubernetes"
-      version = "~> 2.23"  # latest stable
+      version = "~> 2.23"
     }
     helm = {
       source  = "hashicorp/helm"
-      version = "~> 2.9"   # latest stable
+      version = "~> 2.9"
     }
     random = {
       source  = "hashicorp/random"
@@ -23,7 +23,6 @@ terraform {
     }
   }
 }
-
 
 resource "random_pet" "name" {
   length = 2
@@ -37,62 +36,10 @@ resource "local_file" "demo" {
 output "demo_message" {
   value = local_file.demo.content
 }
-#### EKS CLUSTER ###
 
-
-# EKS cluster IAM role
-resource "aws_iam_role" "eks_cluster_role" {
-  name = "eks-cluster-role-ai-dev"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Action = "sts:AssumeRole"
-      Principal = {
-        Service = "eks.amazonaws.com"
-      }
-      Effect = "Allow"
-    }]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "eks_cluster_policy" {
-  role       = aws_iam_role.eks_cluster_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
-}
-
-# Node group IAM role
-resource "aws_iam_role" "eks_node_role" {
-  name = "eks-node-role-ai-dev"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Action = "sts:AssumeRole"
-      Principal = {
-        Service = "ec2.amazonaws.com"
-      }
-      Effect = "Allow"
-    }]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "node_AmazonEKSWorkerNodePolicy" {
-  role       = aws_iam_role.eks_node_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
-}
-
-resource "aws_iam_role_policy_attachment" "node_AmazonEKS_CNI_Policy" {
-  role       = aws_iam_role.eks_node_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
-}
-
-resource "aws_iam_role_policy_attachment" "node_AmazonEC2ContainerRegistryReadOnly" {
-  role       = aws_iam_role.eks_node_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
-}
-
-# VPC + Subnets
+######################
+### VPC
+######################
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "5.1.2"
@@ -111,23 +58,12 @@ module "vpc" {
 
   tags = {
     Environment = "dev"
-    Give = "Get"
-  }
-  tags = {
-    Environment = "dev"
-    Give        = "Get"
-  }
-
-  public_subnet_tags = {
-    "kubernetes.io/role/elb" = "1"
-  }
-
-  private_subnet_tags = {
-    "kubernetes.io/role/internal-elb" = "1"
   }
 }
 
-# EKS Cluster
+######################
+### EKS Cluster
+######################
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "~> 20.0"
@@ -138,146 +74,79 @@ module "eks" {
   subnet_ids = module.vpc.private_subnets
   vpc_id     = module.vpc.vpc_id
 
-  tags = {
-    Environment = "dev"
-  }
-  cluster_endpoint_public_access  = true
-  enable_cluster_creator_admin_permissions = true
-
-  access_entries = {
-    # One access entry with a policy associated
-    example = {
-      kubernetes_groups = []
-      principal_arn     = aws_iam_role.eks_node_role.arn
-
-      policy_associations = {
-        example = {
-          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSViewPolicy"
-          access_scope = {
-            namespaces = ["default", "aidemo", "argocd"]
-            type       = "namespace"
-          }
-        }
-      }
-    }
-   node_security_group_additional_rules = {
-
-    node_to_node_ig = {
-      description = "Node to node ingress traffic"
-      from_port   = 1
-      to_port     = 65535
-      protocol    = "all"
-      type        = "ingress"
-      self        = true
-    }
-  }
-
   cluster_addons = {
-    coredns = {
-      most_recent = true
-    }
-    kube-proxy = {
-      most_recent = true
-    }
-    vpc-cni = {
-      most_recent = true
-    }
-    metrics-server = {
-      most_recent              = true
-    }
-  }
-    # EKS Managed Node Group(s)
-  eks_managed_node_group_defaults = {
-    instance_types = ["m6i.large", "m5.large", "m5n.large", "m5zn.large"]
+    coredns = { most_recent = true }
+    kube-proxy = { most_recent = true }
+    vpc-cni = { most_recent = true }
+    metrics-server = { most_recent = true }
   }
 
   eks_managed_node_groups = {
     dev_nodes = {
+      desired_size = 2
       min_size     = 1
       max_size     = 3
-      desired_size = 2
-
       instance_types = ["t3.large"]
-
-      capacity_type = "SPOT"
-
-      iam_role_arn = aws_iam_role.eks_node_role.arn
-
-      tags = {
-        Environment = "dev"
-      }
+      capacity_type  = "SPOT"
+      iam_role_arn   = aws_iam_role.eks_node_role.arn
+      tags = { Environment = "dev" }
     }
+  }
+
+  node_security_group_additional_rules = {
+    node_to_node_ig = {
+      description = "Node to node ingress"
+      from_port   = 1
+      to_port     = 65535
+      protocol    = "all"
+      self        = true
+      type        = "ingress"
+    }
+  }
+
+  tags = {
+    Environment = "dev"
   }
 }
 
-output "cluster_name" {
-  value = module.eks.cluster_name
-}
-
-output "cluster_endpoint" {
-  value = module.eks.cluster_endpoint
-}
-
-output "cluster_certificate_authority_data" {
-  value = module.eks.cluster_certificate_authority_data
-}
-
-### route53 ###
-# Fetch your existing VPC
-data "aws_vpc" "eks_vpc" {
-  id = module.vpc.vpc_id  
-}
-
-# Fetch the hosted zone (private)
-data "aws_route53_zone" "private_zone" {
-  name         = "designcodemonkey.io" 
-  private_zone = true
-}
-
-
-## Deploy application called portfolio
-data "aws_eks_cluster_auth" "example" {
+######################
+### Providers (Top-Level)
+######################
+data "aws_eks_cluster_auth" "eks" {
   name = module.eks.cluster_name
 }
-###############################
-# Kubernetes Provider
-##############################
 
 provider "kubernetes" {
+  alias                  = "eks"
   host                   = module.eks.cluster_endpoint
   cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
-  token                  = data.aws_eks_cluster_auth.example.token
+  token                  = data.aws_eks_cluster_auth.eks.token
 }
 
-##############################
-# Helm Provider
-##############################
-
 provider "helm" {
+  alias = "eks"
   kubernetes {
     host                   = module.eks.cluster_endpoint
     cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
-    token                  = data.aws_eks_cluster_auth.example.token
+    token                  = data.aws_eks_cluster_auth.eks.token
   }
 }
 
-##############################
-# ArgoCD Helm Deployment
-##############################
-
+######################
+### ArgoCD Helm Deployment
+######################
 resource "kubernetes_namespace" "argocd" {
-  metadata {
-    name = "argocd"
-  }
+  metadata { name = "argocd" }
 }
 
 resource "helm_release" "argocd" {
-  name             = "argocd"
-  namespace        = kubernetes_namespace.argocd.metadata[0].name
-  repository       = "https://argoproj.github.io/argo-helm"
-  chart            = "argo-cd"
-  version          = "8.3.1"
+  name       = "argocd"
+  namespace  = kubernetes_namespace.argocd.metadata[0].name
+  repository = "https://argoproj.github.io/argo-helm"
+  chart      = "argo-cd"
+  version    = "8.3.1"
   create_namespace = false
+  providers = { helm = helm.eks }
 
   values = [
     yamlencode({
@@ -288,10 +157,7 @@ resource "helm_release" "argocd" {
           hosts            = ["argocd.designcodemonkey.space"]
           paths            = ["/"]
           pathType         = "Prefix"
-          https = {
-            enabled     = true
-            servicePort = 443
-          }
+          https = { enabled = true, servicePort = 443 }
           annotations = {
             "alb.ingress.kubernetes.io/scheme"          = "internet-facing"
             "alb.ingress.kubernetes.io/listen-ports"    = "[{\"HTTPS\":443}]"
@@ -303,7 +169,6 @@ resource "helm_release" "argocd" {
           }
         }
       }
-
       dex = {
         connectors = [
           {
@@ -313,25 +178,15 @@ resource "helm_release" "argocd" {
             config = {
               clientID     = "Iv23li8fHaEMkjZoeqY"
               clientSecret = "70a4b7f1adf29d7065376030455edbdd5cf573c8"
-              orgs = [
-                { name = "turtlelovesshoes" }
-              ]
+              orgs = [{ name = "turtlelovesshoes" }]
             }
           }
         ]
       }
-
-      rbac = {
-        policyCSV = "g, turtlelovesshoes, role:admin"
-      }
-
+      rbac = { policyCSV = "g, turtlelovesshoes, role:admin" }
       repoServer = {
         defaultRepos = [
-          {
-            url    = "https://github.com/turtlelovesshoes/waffle-scaling-ai-infra.git"
-            path   = "k8s/"
-            branch = "main"
-          }
+          { url = "https://github.com/turtlelovesshoes/waffle-scaling-ai-infra.git", path = "k8s/", branch = "main" }
         ]
       }
     })
