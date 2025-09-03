@@ -136,7 +136,8 @@ module "eks" {
 
   cluster_endpoint_public_access              = true
   enable_cluster_creator_admin_permissions    = true
-  cluster_role_arn                            = aws_iam_role.eks_cluster_role.arn
+  iam_role_name                               = aws_iam_role.eks_cluster_role.name
+
 
   tags = { Environment = "dev" }
 
