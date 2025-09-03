@@ -1,15 +1,15 @@
 data "aws_route53_zone" "main" {
-  name         = "designcodemonkey.io"
+  name         = "designcodemonkey.space."
   private_zone = false
 }
 
 resource "aws_acm_certificate" "argocd" {
-  domain_name               = "argocd.designcodemonkey.io"
+  domain_name               = "argocd.designcodemonkey.space"
   validation_method         = "DNS"
-  subject_alternative_names = ["*.designcodemonkey.io"]
+  subject_alternative_names = ["*.designcodemonkey.space"]
 
   tags = {
-    Name        = "argocd.designcodemonkey.io"
+    Name        = "argocd.designcodemonkey.space"
     Environment = "dev"
   }
 }
