@@ -238,7 +238,7 @@ resource "helm_release" "argocd" {
         annotations = {
           "alb.ingress.kubernetes.io/scheme"          = "internet-facing"
           "alb.ingress.kubernetes.io/listen-ports"    = "[{\"HTTPS\":443}]"
-          "alb.ingress.kubernetes.io/certificate-arn" = "arn:aws:acm:us-west-2:391767403730:certificate/your-cert-arn"
+          "alb.ingress.kubernetes.io/certificate-arn" = "arn:aws:acm:us-west-2:391767403730:certificate/f070bd2e-43a6-425e-bf33-b24e36647e42"
           "alb.ingress.kubernetes.io/ssl-redirect"    = "443"
           "alb.ingress.kubernetes.io/target-type"     = "ip"
           "alb.ingress.kubernetes.io/group.name"      = "argocd-alb-target-group"
