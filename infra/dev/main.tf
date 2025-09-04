@@ -128,7 +128,7 @@ module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "~> 20.0"
 
-  cluster_name    = "ai-demo-${random_pet.name.id}"
+  cluster_name    = "ai-demo"
   cluster_version = "1.32"
   
   subnet_ids = module.vpc.private_subnets
@@ -160,12 +160,14 @@ module "eks" {
     instance_types = ["t3.large"]
     capacity_type  = "SPOT"
     iam_role_arn   = aws_iam_role.eks_node_role.arn
-
-    tags = {
-      Environment = "dev"
-    }
   }
-}
+  }
+  lifecycle {
+      create_before_destroy = true
+    }
+  tags = {
+        Environment = "dev"
+      }
 }
 
 output "cluster_name" {
