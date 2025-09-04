@@ -160,11 +160,8 @@ module "eks" {
     instance_types = ["t3.large"]
     capacity_type  = "SPOT"
     iam_role_arn   = aws_iam_role.eks_node_role.arn
+   }
   }
-  }
-  tags = {
-        Environment = "dev"
-      }
 }
 
 output "cluster_name" {
