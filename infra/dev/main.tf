@@ -162,9 +162,6 @@ module "eks" {
     iam_role_arn   = aws_iam_role.eks_node_role.arn
   }
   }
-  lifecycle {
-      create_before_destroy = true
-    }
   tags = {
         Environment = "dev"
       }
