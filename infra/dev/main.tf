@@ -175,3 +175,98 @@ output "cluster_endpoint" {
 output "cluster_certificate_authority_data" {
   value = module.eks.cluster_certificate_authority_data
 }
+
+
+##############################
+# Kubernetes & Helm Providers
+##############################
+data "aws_eks_cluster" "cluster" {
+  name = module.eks.cluster_name
+}
+
+data "aws_eks_cluster_auth" "cluster" {
+  name = module.eks.cluster_name
+}
+
+data "aws_eks_cluster_auth" "eks" {
+  name = module.eks.cluster_name
+}
+
+provider "kubernetes" {
+  host                   = data.aws_eks_cluster.cluster.endpoint
+  cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority[0].data)
+  token                  = data.aws_eks_cluster_auth.cluster.token
+}
+
+provider "helm" {
+  kubernetes {
+    host                   = data.aws_eks_cluster.cluster.endpoint
+    cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority[0].data)
+    token                  = data.aws_eks_cluster_auth.cluster.token
+  }
+}
+
+##############################
+# ArgoCD Helm Deployment
+##############################
+
+resource "kubernetes_namespace" "argocd" {
+  metadata { name = "argocd" }
+}
+
+resource "helm_release" "argocd" {
+  provider        = helm
+  name            = "argocd"
+  namespace       = kubernetes_namespace.argocd.metadata[0].name
+  repository      = "https://argoproj.github.io/argo-helm"
+  chart           = "argo-cd"
+  version         = "8.3.1"
+  create_namespace = false
+
+  values = [yamlencode({
+    server = {
+      ingress = {
+        enabled          = true
+        ingressClassName = "alb"
+        hosts            = ["argocd.designcodemonkey.io"]
+        paths            = ["/"]
+        pathType         = "Prefix"
+        https = { enabled = true, servicePort = 443 }
+        annotations = {
+          "alb.ingress.kubernetes.io/scheme"          = "internet-facing"
+          "alb.ingress.kubernetes.io/listen-ports"    = "[{\"HTTPS\":443}]"
+          "alb.ingress.kubernetes.io/certificate-arn" = "arn:aws:acm:us-west-2:391767403730:certificate/f070bd2e-43a6-425e-bf33-b24e36647e42"
+          "alb.ingress.kubernetes.io/ssl-redirect"    = "443"
+          "alb.ingress.kubernetes.io/target-type"     = "ip"
+          "alb.ingress.kubernetes.io/group.name"      = "argocd-alb-target-group"
+          "kubernetes.io/ingress.class"               = "alb"
+        }
+      }
+    }
+    dex = {
+      connectors = [{
+        type   = "github"
+        id     = "github"
+        name   = "GitHub"
+        config = {
+          clientID     = "Iv23li8fHaEMkjZoeqY"
+          clientSecret = "70a4b7f1adf29d7065376030455edbdd5cf573c8"
+          orgs         = [{ name = "turtlelovesshoes" }]
+        }
+      }]
+    }
+    rbac = { policyCSV = "g, turtlelovesshoes, role:admin" }
+    repoServer = {
+      defaultRepos = [{
+        url    = "https://github.com/turtlelovesshoes/waffle-scaling-ai-infra.git"
+        path   = "k8s/"
+        branch = "main"
+      }]
+    }
+  })]
+
+  wait            = true
+  cleanup_on_fail = true
+  depends_on = [module.eks]
+}
+
