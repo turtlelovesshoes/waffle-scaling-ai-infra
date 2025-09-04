@@ -128,7 +128,7 @@ module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "~> 20.0"
 
-  cluster_name    = "ai-demo"
+  cluster_name    = "ai-demo-${random_pet.cluster_suffix.id}"
   cluster_version = "1.32"
   
   subnet_ids = module.vpc.private_subnets
