@@ -33,3 +33,4 @@ resource "aws_acm_certificate_validation" "argocd" {
   certificate_arn         = aws_acm_certificate.argocd.arn
   validation_record_fqdns = [for record in aws_route53_record.argocd_cert_validation : record.fqdn]
 }
+## TODO: Create a variable here to reference the cert in main in the helm chart resource
