@@ -108,6 +108,16 @@ module "vpc" {
   enable_dns_support   = true
 
   tags = { Environment = "dev" }
+
+  public_subnet_tags = {
+    "kubernetes.io/role/elb"                    = "1"
+    "kubernetes.io/cluster/ai-demo" = "owned"
+  }
+
+  private_subnet_tags = {
+    "kubernetes.io/role/internal-elb"           = "1"
+    "kubernetes.io/cluster/ai-demo" = "owned"
+  }
 }
 
 ##################################
@@ -193,17 +203,92 @@ provider "helm" {
 ##################################
 
 resource "kubernetes_namespace" "aws_lb_controller" {
-  metadata { name = "aws-load-balancer-controller" }
+  metadata {
+    name = "aws-load-balancer-controller"
+  }
   depends_on = [module.eks]
 }
 
 resource "kubernetes_namespace" "argocd" {
-  metadata { name = "argocd" }
+  metadata {
+    name = "argocd"
+  }
   depends_on = [module.eks]
 }
 
 ##################################
-### Helm Releases
+### IAM Role & Policy for AWS LB Controller
+##################################
+
+# IAM Role for AWS LB Controller Service Account
+resource "aws_iam_role" "aws_lb_controller_role" {
+  name = "aws-lb-controller-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Federated = module.eks.oidc_provider_arn
+      }
+      Action = "sts:AssumeRoleWithWebIdentity"
+      Condition = {
+        StringEquals = {
+          "${replace(module.eks.cluster_oidc_issuer_url, "https://", "")}:sub" = "system:serviceaccount:aws-load-balancer-controller:aws-load-balancer-controller"
+        }
+      }
+    }]
+  })
+}
+
+# IAM Policy for AWS LB Controller
+resource "aws_iam_policy" "aws_lb_controller_policy" {
+  name        = "aws-lb-controller-policy"
+  description = "Policy for AWS Load Balancer Controller"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = [
+        "elasticloadbalancing:*",
+        "ec2:Describe*",
+        "ec2:AuthorizeSecurityGroupIngress",
+        "iam:CreateServiceLinkedRole",
+        "cognito-idp:DescribeUserPoolClient",
+        "waf-regional:GetWebACL",
+        "waf-regional:GetWebACLForResource",
+        "waf-regional:AssociateWebACL",
+        "tag:GetResources",
+        "tag:TagResources"
+      ]
+      Resource = "*"
+    }]
+  })
+}
+
+# Attach IAM Policy to Role
+resource "aws_iam_role_policy_attachment" "aws_lb_controller_attach" {
+  role       = aws_iam_role.aws_lb_controller_role.name
+  policy_arn = aws_iam_policy.aws_lb_controller_policy.arn
+}
+
+##################################
+### Kubernetes Service Account
+##################################
+
+resource "kubernetes_service_account" "aws_lb_controller" {
+  metadata {
+    name      = "aws-load-balancer-controller"
+    namespace = kubernetes_namespace.aws_lb_controller.metadata[0].name
+    annotations = {
+      "eks.amazonaws.com/role-arn" = aws_iam_role.aws_lb_controller_role.arn
+    }
+  }
+}
+
+##################################
+### Helm Release for AWS LB Controller
 ##################################
 
 resource "helm_release" "aws_lb_controller" {
@@ -211,100 +296,32 @@ resource "helm_release" "aws_lb_controller" {
   namespace  = kubernetes_namespace.aws_lb_controller.metadata[0].name
   repository = "https://aws.github.io/eks-charts"
   chart      = "aws-load-balancer-controller"
-  version    = "1.10.3"
-  depends_on = [module.eks, kubernetes_namespace.aws_lb_controller]
+  version    = "1.11.0"
+  depends_on = [module.eks, kubernetes_namespace.aws_lb_controller, kubernetes_service_account.aws_lb_controller]
+
+  values = [yamlencode({
+    clusterName = module.eks.cluster_name
+    serviceAccount = {
+      create = false
+      name   = "aws-load-balancer-controller"
+    }
+  })]
 }
 
-data "aws_acm_certificate" "argocd" {
-  domain      = "argocd.designcodemonkey.space"
-  statuses    = ["ISSUED"]
-  most_recent = true
-}
+##################################
+### ACM Certificate & Validation for ArgoCD
+##################################
 
-resource "aws_acm_certificate_validation" "argocd" {
-  certificate_arn         = data.aws_acm_certificate.argocd.arn
-  validation_record_fqdns = ["argocd.designcodemonkey.space"]
-}
-
-data "aws_secretsmanager_secret_version" "github_oauth" {
-  secret_id = "github_oauth"
-}
-
-locals { github_oauth = jsondecode(data.aws_secretsmanager_secret_version.github_oauth.secret_string) }
-
-resource "helm_release" "argocd" {
-  name             = "argocd"
-  namespace        = kubernetes_namespace.argocd.metadata[0].name
-  repository       = "https://argoproj.github.io/argo-helm"
-  chart            = "argo-cd"
-  version          = "8.3.1"
-  create_namespace = false
-  wait             = true
-  cleanup_on_fail  = true
-  depends_on       = [module.eks, kubernetes_namespace.argocd]
-
-  values = [
-    yamlencode({
-      server = {
-        ingress = {
-          enabled          = true
-          ingressClassName = "alb"
-          hosts            = ["argocd.designcodemonkey.space"]
-          paths            = ["/"]
-          pathType         = "Prefix"
-          https = { enabled = true, servicePort = 443 }
-          annotations = {
-            "alb.ingress.kubernetes.io/scheme"           = "internet-facing"
-            "alb.ingress.kubernetes.io/listen-ports"    = "[{\"HTTPS\":443}]"
-            "alb.ingress.kubernetes.io/certificate-arn" = data.aws_acm_certificate.argocd.arn
-            "alb.ingress.kubernetes.io/ssl-redirect"    = "443"
-            "alb.ingress.kubernetes.io/target-type"     = "ip"
-            "alb.ingress.kubernetes.io/group.name"      = "argocd-alb-target-group"
-            "kubernetes.io/ingress.class"               = "alb"
-          }
-        }
-      }
-      dex = {
-        connectors = [{
-          type   = "github"
-          id     = "github"
-          name   = "GitHub"
-          config = {
-            clientID     = local.github_oauth.github_oauth_client_id
-            clientSecret = local.github_oauth.github_oauth_client_secret
-            orgs         = [{ name = "turtlelovesshoes" }]
-          }
-        }]
-      }
-      rbac = { policyCSV = "g, turtlelovesshoes, role:admin" }
-      repoServer = {
-        defaultRepos = [{
-          url    = "https://github.com/turtlelovesshoes/waffle-scaling-ai-infra.git"
-          path   = "k8s/"
-          branch = "main"
-        }]
-      }
-    })
-  ]
-}
-## missing ##
-# 1. ACM Certificate for your domain
 resource "aws_acm_certificate" "argocd_cert" {
   domain_name       = "argocd.designcodemonkey.space"
   validation_method = "DNS"
-
-  tags = {
-    Name = "argocd-cert"
-  }
 }
 
-# 2. Route 53 Zone (existing)
 data "aws_route53_zone" "main" {
   name         = "designcodemonkey.space."
   private_zone = false
 }
 
-# 3. Route 53 DNS Record for Certificate Validation
 resource "aws_route53_record" "argocd_cert_validation" {
   for_each = {
     for dvo in aws_acm_certificate.argocd_cert.domain_validation_options : dvo.domain_name => {
@@ -321,55 +338,142 @@ resource "aws_route53_record" "argocd_cert_validation" {
   records = [each.value.record]
 }
 
-# 4. Validate ACM Certificate
 resource "aws_acm_certificate_validation" "argocd_cert_validation" {
   certificate_arn         = aws_acm_certificate.argocd_cert.arn
   validation_record_fqdns = [for record in aws_route53_record.argocd_cert_validation : record.fqdn]
+  depends_on               = [aws_route53_record.argocd_cert_validation]
 }
 
-# 5. IAM Role for ArgoCD Controller
+##################################
+### Secrets for Dex
+##################################
+
+data "aws_secretsmanager_secret_version" "github_oauth" {
+  secret_id = "github_oauth"
+}
+
+locals {
+  github_oauth = jsondecode(data.aws_secretsmanager_secret_version.github_oauth.secret_string)
+}
+
+##################################
+### ArgoCD Helm Release
+##################################
+resource "helm_release" "argocd" {
+  name             = "argocd"
+  namespace        = kubernetes_namespace.argocd.metadata[0].name
+  repository       = "https://argoproj.github.io/argo-helm"
+  chart            = "argo-cd"
+  version          = "8.3.1"
+  create_namespace = false
+  wait             = true
+  cleanup_on_fail  = true
+  depends_on       = [
+    module.eks,
+    kubernetes_namespace.argocd,
+    aws_acm_certificate_validation.argocd_cert_validation
+  ]
+
+  values = [yamlencode({
+    server = {
+      ingress = {
+        enabled          = true
+        ingressClassName = "alb"
+        hosts = [
+          {
+            host  = "argocd.designcodemonkey.space"
+            paths = [
+              {
+                path     = "/"
+                pathType = "Prefix"
+                backend = {
+                  service = {
+                    name = "argocd-server"
+                    port = { number = 443 }
+                  }
+                }
+              }
+            ]
+          }
+        ]
+        annotations = {
+          "alb.ingress.kubernetes.io/scheme"             = "internet-facing"
+          "alb.ingress.kubernetes.io/listen-ports"      = "[{\"HTTPS\":443}]"
+          "alb.ingress.kubernetes.io/certificate-arn"   = aws_acm_certificate_validation.argocd_cert_validation.certificate_arn
+          "alb.ingress.kubernetes.io/ssl-redirect"      = "443"
+          "alb.ingress.kubernetes.io/target-type"       = "ip"
+          "alb.ingress.kubernetes.io/group.name"        = "argocd-alb-target-group"
+          "alb.ingress.kubernetes.io/loadbalancer-name" = "argocd-alb"
+          "kubernetes.io/ingress.class"                 = "alb"
+        }
+      }
+    }
+    dex = {
+      connectors = [{
+        type   = "github"
+        id     = "github"
+        name   = "GitHub"
+        config = {
+          clientID     = local.github_oauth.github_oauth_client_id
+          clientSecret = local.github_oauth.github_oauth_client_secret
+          orgs         = [{ name = "turtlelovesshoes" }]
+        }
+      }]
+    }
+    rbac = {
+      policyCSV = "g, turtlelovesshoes, role:admin"
+    }
+    repoServer = {
+      defaultRepos = [{
+        url    = "https://github.com/turtlelovesshoes/waffle-scaling-ai-infra.git"
+        path   = "k8s/"
+        branch = "main"
+      }]
+    }
+  })]
+}
+
+
+##################################
+### IAM Role & Policy for ArgoCD Controller
+##################################
+
 resource "aws_iam_role" "argocd_controller_role" {
   name = "argocd-controller-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
-    Statement = [
-      {
-        Effect = "Allow"
-        Principal = {
-          Service = "eks.amazonaws.com"  # EKS service account if using IRSA
-        }
-        Action = "sts:AssumeRole"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Service = "eks.amazonaws.com"
       }
-    ]
+      Action = "sts:AssumeRole"
+    }]
   })
 }
 
-# 6. IAM Policy for Controller
 resource "aws_iam_policy" "argocd_controller_policy" {
   name        = "argocd-controller-policy"
   description = "Policy for ArgoCD to manage ACM & Route53 DNS validation"
 
   policy = jsonencode({
     Version = "2012-10-17",
-    Statement = [
-      {
-        Effect   = "Allow"
-        Action   = [
-          "acm:DescribeCertificate",
-          "acm:ListCertificates",
-          "acm:GetCertificate",
-          "route53:ChangeResourceRecordSets",
-          "route53:ListResourceRecordSets",
-          "route53:GetHostedZone"
-        ]
-        Resource = "*"
-      }
-    ]
+    Statement = [{
+      Effect   = "Allow"
+      Action   = [
+        "acm:DescribeCertificate",
+        "acm:ListCertificates",
+        "acm:GetCertificate",
+        "route53:ChangeResourceRecordSets",
+        "route53:ListResourceRecordSets",
+        "route53:GetHostedZone"
+      ]
+      Resource = "*"
+    }]
   })
 }
 
-# 7. Attach IAM Policy to Role
 resource "aws_iam_role_policy_attachment" "argocd_attach" {
   role       = aws_iam_role.argocd_controller_role.name
   policy_arn = aws_iam_policy.argocd_controller_policy.arn
