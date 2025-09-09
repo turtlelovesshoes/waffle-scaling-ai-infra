@@ -254,6 +254,7 @@ resource "aws_iam_policy" "aws_lb_controller_policy" {
         "elasticloadbalancing:*",
         "ec2:Describe*",
         "ec2:AuthorizeSecurityGroupIngress",
+        "ec2:CreateSecurityGroup",
         "iam:CreateServiceLinkedRole",
         "cognito-idp:DescribeUserPoolClient",
         "waf-regional:GetWebACL",
@@ -477,4 +478,50 @@ resource "aws_iam_policy" "argocd_controller_policy" {
 resource "aws_iam_role_policy_attachment" "argocd_attach" {
   role       = aws_iam_role.argocd_controller_role.name
   policy_arn = aws_iam_policy.argocd_controller_policy.arn
+}
+
+
+# Kyverno Controller
+resource "helm_release" "kyverno" {
+  name             = "kyverno"
+  repository       = "https://kyverno.github.io/kyverno/"
+  chart            = "kyverno"
+  namespace        = "kyverno"
+  version          = "3.1.4" # check latest version
+  create_namespace = true
+
+  values = [
+    yamlencode({
+      replicaCount = 2
+      serviceMonitor = {
+        enabled = true
+      }
+    })
+  ]
+}
+
+# Kyverno Policies
+resource "helm_release" "kyverno_policies" {
+  name             = "kyverno-policies"
+  repository       = "https://kyverno.github.io/kyverno/"
+  chart            = "kyverno-policies"
+  namespace        = "kyverno"
+  version          = "3.1.4" # match the kyverno release version
+  depends_on       = [helm_release.kyverno]
+
+  values = [
+    yamlencode({
+      policies = {
+        podSecurity = {
+          enabled = true
+        }
+        requireLabels = {
+          enabled = true
+        }
+        disallowPrivileged = {
+          enabled = true
+        }
+      }
+    })
+  ]
 }
