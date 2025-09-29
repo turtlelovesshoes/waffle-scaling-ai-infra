@@ -11,7 +11,7 @@ terraform {
     }
     helm = {
       source  = "hashicorp/helm"
-      version = "~> 2.9"
+      version = "~> 2.16"
     }
     random = {
       source  = "hashicorp/random"
@@ -110,13 +110,13 @@ module "vpc" {
   tags = { Environment = "dev" }
 
   public_subnet_tags = {
-    "kubernetes.io/role/elb"                    = "1"
+    "kubernetes.io/role/elb"        = "1"
     "kubernetes.io/cluster/ai-demo" = "owned"
   }
 
   private_subnet_tags = {
-    "kubernetes.io/role/internal-elb"           = "1"
-    "kubernetes.io/cluster/ai-demo" = "owned"
+    "kubernetes.io/role/internal-elb" = "1"
+    "kubernetes.io/cluster/ai-demo"   = "owned"
   }
 }
 
@@ -128,11 +128,11 @@ module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "~> 20.0"
 
-  cluster_name    = "ai-demo"
-  cluster_version = "1.32"
-  subnet_ids      = module.vpc.private_subnets
-  vpc_id          = module.vpc.vpc_id
-  cluster_endpoint_public_access      = true
+  cluster_name                             = "ai-demo"
+  cluster_version                          = "1.32"
+  subnet_ids                               = module.vpc.private_subnets
+  vpc_id                                   = module.vpc.vpc_id
+  cluster_endpoint_public_access           = true
   enable_cluster_creator_admin_permissions = true
 
   tags = { Environment = "dev" }
@@ -145,14 +145,15 @@ module "eks" {
       instance_types = ["t3.large"]
       capacity_type  = "SPOT"
       iam_role_arn   = aws_iam_role.eks_node_role.arn
-      tags = { Environment = "dev" }
+      tags           = { Environment = "dev" }
     }
   }
 
   cluster_addons = {
-    coredns   = { most_recent = true }
+    coredns    = { most_recent = true }
     kube-proxy = { most_recent = true }
     vpc-cni    = { most_recent = true }
+
   }
 
   access_entries = {
@@ -249,8 +250,8 @@ resource "aws_iam_policy" "aws_lb_controller_policy" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Effect   = "Allow"
-      Action   = [
+      Effect = "Allow"
+      Action = [
         "elasticloadbalancing:*",
         "ec2:Describe*",
         "ec2:AuthorizeSecurityGroupIngress",
@@ -261,7 +262,8 @@ resource "aws_iam_policy" "aws_lb_controller_policy" {
         "waf-regional:GetWebACLForResource",
         "waf-regional:AssociateWebACL",
         "tag:GetResources",
-        "tag:TagResources"
+        "tag:TagResources",
+        "ec2:CreateTags"
       ]
       Resource = "*"
     }]
@@ -342,7 +344,7 @@ resource "aws_route53_record" "argocd_cert_validation" {
 resource "aws_acm_certificate_validation" "argocd_cert_validation" {
   certificate_arn         = aws_acm_certificate.argocd_cert.arn
   validation_record_fqdns = [for record in aws_route53_record.argocd_cert_validation : record.fqdn]
-  depends_on               = [aws_route53_record.argocd_cert_validation]
+  depends_on              = [aws_route53_record.argocd_cert_validation]
 }
 
 ##################################
@@ -369,7 +371,8 @@ resource "helm_release" "argocd" {
   create_namespace = false
   wait             = true
   cleanup_on_fail  = true
-  depends_on       = [
+
+  depends_on = [
     module.eks,
     kubernetes_namespace.argocd,
     aws_acm_certificate_validation.argocd_cert_validation
@@ -377,12 +380,18 @@ resource "helm_release" "argocd" {
 
   values = [yamlencode({
     server = {
+      service = {
+        type = "ClusterIP"
+        ports = {
+          https = 80  # Internal port backend for ingress (HTTP, ALB terminates TLS)
+        }
+      }
       ingress = {
         enabled          = true
         ingressClassName = "alb"
         hosts = [
           {
-            host  = "argocd.designcodemonkey.space"
+            host = "argocd.designcodemonkey.space"
             paths = [
               {
                 path     = "/"
@@ -390,7 +399,7 @@ resource "helm_release" "argocd" {
                 backend = {
                   service = {
                     name = "argocd-server"
-                    port = { number = 443 }
+                    port = { number = 80 }  # backend port changed to 80
                   }
                 }
               }
@@ -398,22 +407,23 @@ resource "helm_release" "argocd" {
           }
         ]
         annotations = {
-          "alb.ingress.kubernetes.io/scheme"             = "internet-facing"
-          "alb.ingress.kubernetes.io/listen-ports"      = "[{\"HTTPS\":443}]"
-          "alb.ingress.kubernetes.io/certificate-arn"   = aws_acm_certificate_validation.argocd_cert_validation.certificate_arn
-          "alb.ingress.kubernetes.io/ssl-redirect"      = "443"
-          "alb.ingress.kubernetes.io/target-type"       = "ip"
-          "alb.ingress.kubernetes.io/group.name"        = "argocd-alb-target-group"
-          "alb.ingress.kubernetes.io/loadbalancer-name" = "argocd-alb"
-          "kubernetes.io/ingress.class"                 = "alb"
+          "alb.ingress.kubernetes.io/scheme"              = "internet-facing"
+          "alb.ingress.kubernetes.io/listen-ports" = "[{\"HTTP\": 80}, {\"HTTPS\": 443}]"
+          "alb.ingress.kubernetes.io/certificate-arn"     = aws_acm_certificate_validation.argocd_cert_validation.certificate_arn
+          "alb.ingress.kubernetes.io/ssl-redirect"        = "443"
+          "alb.ingress.kubernetes.io/target-type"         = "ip"
+          "alb.ingress.kubernetes.io/group.name"          = "argocd-alb-target-group"
+          "alb.ingress.kubernetes.io/loadbalancer-name"   = "argocd-alb"
+          "alb.ingress.kubernetes.io/healthcheck-path"    = "/healthz"          # health check path
+          "kubernetes.io/ingress.class"                    = "alb"
         }
       }
     }
     dex = {
       connectors = [{
-        type   = "github"
-        id     = "github"
-        name   = "GitHub"
+        type = "github"
+        id   = "github"
+        name = "GitHub"
         config = {
           clientID     = local.github_oauth.github_oauth_client_id
           clientSecret = local.github_oauth.github_oauth_client_secret
@@ -433,6 +443,7 @@ resource "helm_release" "argocd" {
     }
   })]
 }
+
 
 
 ##################################
@@ -461,8 +472,8 @@ resource "aws_iam_policy" "argocd_controller_policy" {
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [{
-      Effect   = "Allow"
-      Action   = [
+      Effect = "Allow"
+      Action = [
         "acm:DescribeCertificate",
         "acm:ListCertificates",
         "acm:GetCertificate",
@@ -502,12 +513,12 @@ resource "helm_release" "kyverno" {
 
 # Kyverno Policies
 resource "helm_release" "kyverno_policies" {
-  name             = "kyverno-policies"
-  repository       = "https://kyverno.github.io/kyverno/"
-  chart            = "kyverno-policies"
-  namespace        = "kyverno"
-  version          = "3.1.4" # match the kyverno release version
-  depends_on       = [helm_release.kyverno]
+  name       = "kyverno-policies"
+  repository = "https://kyverno.github.io/kyverno/"
+  chart      = "kyverno-policies"
+  namespace  = "kyverno"
+  version    = "3.1.4" # match the kyverno release version
+  depends_on = [helm_release.kyverno]
 
   values = [
     yamlencode({
@@ -521,6 +532,79 @@ resource "helm_release" "kyverno_policies" {
         disallowPrivileged = {
           enabled = true
         }
+      }
+    })
+  ]
+}
+
+
+resource "helm_release" "karpenter" {
+  name             = "karpenter"
+  repository       = "https://charts.karpenter.sh"
+  chart            = "karpenter"
+  namespace        = "karpenter"
+  version          = "0.35.3"
+  create_namespace = true
+
+  values = [
+    yamlencode({
+      controller = {
+        resources = {
+          requests = {
+            cpu    = "100m"
+            memory = "128Mi"
+          }
+        }
+      }
+      serviceMonitor = {
+        enabled = true
+      }
+    })
+  ]
+}
+
+resource "helm_release" "cilium" {
+  name             = "cilium"
+  repository       = "https://helm.cilium.io/"
+  chart            = "cilium"
+  namespace        = "kube-system"
+  version          = "1.15.0"
+  create_namespace = false
+
+  values = [
+    yamlencode({
+      kubeProxyReplacement = "strict"
+      k8sServiceHost       = "kubernetes.default.svc"
+      k8sServicePort       = 443
+      hubble = {
+        enabled = true
+        relay   = { enabled = true }
+        ui      = { enabled = true }
+        metrics = {
+          enabled = [
+            "dns", "drop", "tcp", "flow",
+            "port-distribution", "icmp"
+          ]
+        }
+      }
+    })
+  ]
+}
+resource "helm_release" "kubernetes_dashboard" {
+  name             = "kubernetes-dashboard"
+  repository       = "https://kubernetes.github.io/dashboard/"
+  chart            = "kubernetes-dashboard"
+  namespace        = "kubernetes-dashboard"
+  version          = "7.3.1"
+  create_namespace = true
+
+  values = [
+    yamlencode({
+      enableInsecureLogin = true
+      protocolHttp        = true
+      service = {
+        type         = "ClusterIP"
+        externalPort = 80
       }
     })
   ]
