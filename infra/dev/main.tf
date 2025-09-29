@@ -217,6 +217,10 @@ resource "kubernetes_namespace" "argocd" {
   depends_on = [module.eks]
 }
 
+
+#### helm for externaldns #####
+
+
 ##################################
 ### IAM Role & Policy for AWS LB Controller
 ##################################
@@ -263,7 +267,13 @@ resource "aws_iam_policy" "aws_lb_controller_policy" {
         "waf-regional:AssociateWebACL",
         "tag:GetResources",
         "tag:TagResources",
-        "ec2:CreateTags"
+        "ec2:CreateTags",
+        "ec2:AuthorizeSecurityGroupIngress",
+        "ec2:RevokeSecurityGroupIngress",
+        "ec2:CreateSecurityGroup",
+        "ec2:DeleteSecurityGroup",
+        "ec2:DescribeSecurityGroups",
+        "ec2:DescribeTags"
       ]
       Resource = "*"
     }]
@@ -380,6 +390,7 @@ resource "helm_release" "argocd" {
 
   values = [yamlencode({
     server = {
+      extraArgs = ["--insecure"]
       service = {
         type = "ClusterIP"
         ports = {
@@ -416,6 +427,7 @@ resource "helm_release" "argocd" {
           "alb.ingress.kubernetes.io/loadbalancer-name"   = "argocd-alb"
           "alb.ingress.kubernetes.io/healthcheck-path"    = "/healthz"          # health check path
           "kubernetes.io/ingress.class"                    = "alb"
+          "external-dns.alpha.kubernetes.io/hostname" = "argocd.designcodemonkey.space"
         }
       }
     }
@@ -538,58 +550,8 @@ resource "helm_release" "kyverno_policies" {
 }
 
 
-resource "helm_release" "karpenter" {
-  name             = "karpenter"
-  repository       = "https://charts.karpenter.sh"
-  chart            = "karpenter"
-  namespace        = "karpenter"
-  version          = "0.35.3"
-  create_namespace = true
 
-  values = [
-    yamlencode({
-      controller = {
-        resources = {
-          requests = {
-            cpu    = "100m"
-            memory = "128Mi"
-          }
-        }
-      }
-      serviceMonitor = {
-        enabled = true
-      }
-    })
-  ]
-}
 
-resource "helm_release" "cilium" {
-  name             = "cilium"
-  repository       = "https://helm.cilium.io/"
-  chart            = "cilium"
-  namespace        = "kube-system"
-  version          = "1.15.0"
-  create_namespace = false
-
-  values = [
-    yamlencode({
-      kubeProxyReplacement = "strict"
-      k8sServiceHost       = "kubernetes.default.svc"
-      k8sServicePort       = 443
-      hubble = {
-        enabled = true
-        relay   = { enabled = true }
-        ui      = { enabled = true }
-        metrics = {
-          enabled = [
-            "dns", "drop", "tcp", "flow",
-            "port-distribution", "icmp"
-          ]
-        }
-      }
-    })
-  ]
-}
 resource "helm_release" "kubernetes_dashboard" {
   name             = "kubernetes-dashboard"
   repository       = "https://kubernetes.github.io/dashboard/"
