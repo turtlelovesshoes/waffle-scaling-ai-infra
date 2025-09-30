@@ -5,9 +5,11 @@ FROM python:3.9-slim-buster
 WORKDIR /app
 
 # Copy the Python application files
+# The contents of ./python_app/ will be copied directly into /app/
 COPY ./python_app/ /app/
 
 # Copy the HTML files to a designated static content directory
+# Assuming the Flask app is configured to serve static files from /app/static/
 COPY ./static_html/ /app/static/
 
 # Install any Python dependencies
@@ -15,9 +17,8 @@ COPY ./python_app/requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Expose the port your Python application will listen on
-EXPOSE 8000
+EXPOSE 8080
 
-# Command to run your Python application (e.g., with Gunicorn or Uvicorn)
-# This example assumes a Flask app named 'app.py' within 'python_app' folder
-# and uses Gunicorn to serve it, potentially serving static files through Flask as well.
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8000", "python_app.app:app"]
+# Command to run your Python application with Gunicorn
+# 'app:app' refers to the 'app' variable inside 'app.py'
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8080", "app:app"]
